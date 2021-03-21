@@ -1,0 +1,10 @@
+expr <- term "*" term
+    / term "/" term
+    / term;
+
+term <- term "+" term
+    / term "-" term
+    / "(" expr ")"
+    / num;
+
+num <- r"[0-9]+";

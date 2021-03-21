@@ -1,0 +1,19 @@
+[package]
+name = "lrpeg"
+version = "0.1.0"
+authors = ["Sean Young <sean@mess.org>"]
+description = "Left recursive PEG parser generator"
+repository = "https://github.com/seanyoung/lrpeg"
+keywords = [ "parser", "generator", "peg", "left-recursive" ]
+categories = ["parsing"]
+edition = "2018"
+readme = "../README.md"
+license = "MIT"
+workspace = ".."
+
+[build-dependencies]
+lalrpop = "0.19"
+
+[dependencies]
+lalrpop-util = "0.19"
+unicode-xid = "0.2"
