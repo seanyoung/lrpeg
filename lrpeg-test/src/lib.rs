@@ -3,6 +3,7 @@
 mod calculator;
 mod direct_left_recursive;
 mod indirect_left_recursive;
+mod irp;
 mod repeat;
 mod test1;
 mod test2;
@@ -109,16 +110,28 @@ fn repeat() {
 
     assert_eq!(
         parse("kx"),
-        "(foo, \"kx\", (Terminal, \"k\"), (Terminal, \"\"), (Terminal, \"x\")))"
+        "(foo, \"kx\", (Terminal, \"k\"), (Terminal, \"\"), (Dot, \"x\")))"
     );
 
     assert_eq!(
         parse("qr"),
-        "(foo, \"qr\", (Terminal, \"q\"), (Terminal, \"\"), (Terminal, \"r\")))"
+        "(foo, \"qr\", (Terminal, \"q\"), (Terminal, \"\"), (Dot, \"r\")))"
     );
 
     assert_eq!(p.parse("qs").unwrap_err(), 1);
     assert_eq!(p.parse("kl").unwrap_err(), 0);
     assert_eq!(p.parse("df").unwrap_err(), 0);
     assert_eq!(p.parse("ad").unwrap_err(), 0);
+}
+
+#[test]
+fn irp() {
+    let mut p = irp::PEG::new();
+
+    let mut parse = |s: &str| -> String { p.parse(s).unwrap().print_to_string(s) };
+
+    assert_eq!(
+        parse("{38.123k, 550 }"),
+        "(irp, \"{38.123k, 550 }\", (WHITESPACE, \"\"), (Terminal, \"{\"), (WHITESPACE, \"\"), (general_item, \"38.123k\", (float_number, \"38.123\", (Terminal, \"38\"), (Terminal, \".\"), (Terminal, \"123\"))), (WHITESPACE, \"\"), (Terminal, \"k\"), (WHITESPACE, \"\"))), (Terminal, \", 550 \", (Terminal, \", 550 \", (Terminal, \",\"), (WHITESPACE, \" \"), (general_item, \"550 \", (Terminal, \"550\"), (WHITESPACE, \" \"))))))), (Terminal, \"}\"), (WHITESPACE, \"\"), (EOI, \"\")))"
+    );
 }

@@ -1,0 +1,14 @@
+irp <- WHITESPACE "{" WHITESPACE general_item ("," WHITESPACE general_item)* "}" WHITESPACE EOI;
+
+general_item <- "msb" WHITESPACE
+    / "lsb" WHITESPACE
+    / float_number WHITESPACE "u" WHITESPACE
+    / float_number WHITESPACE "p" WHITESPACE
+    / float_number WHITESPACE "k" WHITESPACE
+    / float_number WHITESPACE "%" WHITESPACE
+    / float_number WHITESPACE;
+
+float_number <- number "." number
+    / number;
+
+number <- r"[0-9]+";

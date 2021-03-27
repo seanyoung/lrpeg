@@ -12,6 +12,7 @@ use utils::{escape_char, escape_string};
 
 pub struct Generator {
     symbols: HashSet<String>,
+    builtins: HashMap<ast::Expression, String>,
     terminals: HashMap<ast::Expression, String>,
 }
 
@@ -25,6 +26,7 @@ impl Generator {
     pub fn new() -> Self {
         Generator {
             symbols: HashSet::new(),
+            builtins: HashMap::new(),
             terminals: HashMap::new(),
         }
     }
@@ -32,6 +34,8 @@ impl Generator {
     pub fn build(&mut self, grammar: &ast::Grammar) -> String {
         // prepopulate builtins
         self.symbols.insert(String::from("Dot"));
+        self.symbols.insert(String::from("WHITESPACE"));
+        self.symbols.insert(String::from("EOI"));
 
         // collect all symbols
         for def in &grammar.definitions {
@@ -97,9 +101,6 @@ impl Generator {
                     self.terminals.insert(expr.clone(), s);
                 }
             }
-            ast::Expression::Dot => {
-                self.terminals.insert(expr.clone(), String::from("Dot"));
-            }
             ast::Expression::MustMatch(expr)
             | ast::Expression::MustNotMatch(expr)
             | ast::Expression::Optional(expr)
@@ -111,6 +112,16 @@ impl Generator {
                 for expr in list {
                     self.collect_terminals_recursive(expr);
                 }
+            }
+            ast::Expression::Dot => {
+                self.builtins.insert(expr.clone(), String::from("Dot"));
+            }
+            ast::Expression::Whitespace => {
+                self.builtins
+                    .insert(expr.clone(), String::from("WHITESPACE"));
+            }
+            ast::Expression::EOI => {
+                self.builtins.insert(expr.clone(), String::from("EOI"));
             }
             ast::Expression::MemoDefinition(_) | ast::Expression::Definition(_) => (),
         }
@@ -307,9 +318,10 @@ impl Generator {
 
                 res
             }
-            ast::Expression::Dot
-            | ast::Expression::StringLiteral(_)
-            | ast::Expression::Regex(_) => {
+            ast::Expression::Whitespace => String::from(r#"self.builtin_whitespace(pos, input)"#),
+            ast::Expression::EOI => String::from(r#"self.builtin_eoi(pos, input)"#),
+            ast::Expression::Dot => String::from(r#"self.builtin_dot(pos, input)"#),
+            ast::Expression::StringLiteral(_) | ast::Expression::Regex(_) => {
                 let terminal = self.terminals.get(expr).unwrap();
 
                 format!(
@@ -523,6 +535,10 @@ pub enum Rule {
             res.push_str(&format!("    {},\n", def.name));
         }
 
+        for name in self.builtins.values() {
+            res.push_str(&format!("    {},\n", name));
+        }
+
         res.push_str(
             r#"}
 
@@ -598,6 +614,63 @@ impl PEG {
             }
         }
 
+        if self.builtins.contains_key(&ast::Expression::Whitespace) {
+            res.push_str(
+                r#"
+
+    fn builtin_whitespace(&self, pos: usize, input: &str) -> Result<Node, usize> {
+        // TODO: is this worth caching?
+        let mut chars = input[pos..].char_indices();
+        let mut next_pos = pos;
+
+        while let Some((off, ch)) = chars.next() {
+            next_pos = pos + off;
+
+            if !ch.is_whitespace() {
+                break;
+            }
+        }
+
+        Ok(Node::new(Rule::WHITESPACE, pos, next_pos))
+    }"#,
+            );
+        }
+
+        if self.builtins.contains_key(&ast::Expression::EOI) {
+            res.push_str(
+                r#"
+
+    fn builtin_eoi(&self, pos: usize, input: &str) -> Result<Node, usize> {
+        // not worth caching
+        if pos == input.len() {
+            Ok(Node::new(Rule::EOI, pos, pos))
+        } else {
+            Err(pos)
+        }
+    }"#,
+            );
+        }
+
+        if self.builtins.contains_key(&ast::Expression::Dot) {
+            res.push_str(
+                r#"
+
+    fn builtin_dot(&self, pos: usize, input: &str) -> Result<Node, usize> {
+        // not worth caching
+        let mut chars = input[pos..].char_indices();
+        if chars.next().is_some() {
+            if let Some((len, _)) = chars.next() {
+                Ok(Node::new(Rule::Dot, pos, pos + len))
+            } else {
+                Ok(Node::new(Rule::Dot, pos, input.len()))
+            }
+        } else {
+            Err(pos)
+        }
+    }"#,
+            );
+        }
+
         res.push_str(
             r#"
 
@@ -609,7 +682,7 @@ impl PEG {
             return res.map(|end | Node::new(Rule::Terminal, start, end))
         }
 
-        let res = if pos >= input.len() {
+        let res = if pos > input.len() {
             None
         } else {
             match terminal {"#,
@@ -617,23 +690,6 @@ impl PEG {
 
         for (expr, name) in &self.terminals {
             match expr {
-                ast::Expression::Dot => {
-                    res.push_str(
-                        r#"
-                Terminal::Dot => {
-                    let mut chars = input[pos..].char_indices();
-                    if chars.next().is_some() {
-                        if let Some((len, _)) = chars.next() {
-                            Some(pos + len)
-                        } else {
-                            Some(input.len())
-                        }
-                    } else {
-                        None
-                    }
-                }"#,
-                    );
-                }
                 ast::Expression::StringLiteral(s) if s.chars().count() == 1 => {
                     let ch = escape_char(s.chars().next().unwrap());
                     res.push_str(&format!(

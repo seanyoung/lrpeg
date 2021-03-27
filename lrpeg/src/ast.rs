@@ -16,6 +16,8 @@ pub struct Definition {
 #[derive(Clone, Hash, Eq, PartialEq, Debug)]
 pub enum Expression {
     Dot,
+    Whitespace,
+    EOI,
     Definition(usize),
     MemoDefinition(usize),
     StringLiteral(String),

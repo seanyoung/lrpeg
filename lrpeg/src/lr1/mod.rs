@@ -63,7 +63,11 @@ fn expression(expr: &Expression, grammar: &ast::Grammar) -> ast::Expression {
     match expr {
         Expression::Dot => ast::Expression::Dot,
         Expression::Identifier(name) => {
-            if let Some(rule_no) = grammar.lookup.get(name) {
+            if name == "WHITESPACE" {
+                ast::Expression::Whitespace
+            } else if name == "EOI" {
+                ast::Expression::EOI
+            } else if let Some(rule_no) = grammar.lookup.get(name) {
                 ast::Expression::Definition(*rule_no)
             } else {
                 panic!("rule {} not found", name);
