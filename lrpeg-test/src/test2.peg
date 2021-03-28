@@ -1,3 +1,3 @@
-foo <- "barf" " " "darf" / carf ;
+foo <- "barf" " " "darf" / carf;
 carf <- "carf" . erf;
 erf <- "erf";

@@ -67,6 +67,8 @@ fn expression(expr: &Expression, grammar: &ast::Grammar) -> ast::Expression {
                 ast::Expression::Whitespace
             } else if name == "EOI" {
                 ast::Expression::EOI
+            } else if name == "XID_IDENTIFIER" {
+                ast::Expression::XidIdentifier
             } else if let Some(rule_no) = grammar.lookup.get(name) {
                 ast::Expression::Definition(*rule_no)
             } else {

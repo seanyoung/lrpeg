@@ -36,6 +36,7 @@ impl Generator {
         self.symbols.insert(String::from("Dot"));
         self.symbols.insert(String::from("WHITESPACE"));
         self.symbols.insert(String::from("EOI"));
+        self.symbols.insert(String::from("XID_IDENTIFIER"));
 
         // collect all symbols
         for def in &grammar.definitions {
@@ -122,6 +123,10 @@ impl Generator {
             }
             ast::Expression::EOI => {
                 self.builtins.insert(expr.clone(), String::from("EOI"));
+            }
+            ast::Expression::XidIdentifier => {
+                self.builtins
+                    .insert(expr.clone(), String::from("XID_IDENTIFIER"));
             }
             ast::Expression::MemoDefinition(_) | ast::Expression::Definition(_) => (),
         }
@@ -321,6 +326,9 @@ impl Generator {
             ast::Expression::Whitespace => String::from(r#"self.builtin_whitespace(pos, input)"#),
             ast::Expression::EOI => String::from(r#"self.builtin_eoi(pos, input)"#),
             ast::Expression::Dot => String::from(r#"self.builtin_dot(pos, input)"#),
+            ast::Expression::XidIdentifier => {
+                String::from(r#"self.builtin_xid_identifier(pos, input)"#)
+            }
             ast::Expression::StringLiteral(_) | ast::Expression::Regex(_) => {
                 let terminal = self.terminals.get(expr).unwrap();
 
@@ -450,6 +458,7 @@ impl Generator {
 #![allow(unused_imports, dead_code, clippy::all)]
 use std::collections::HashMap;
 use regex::Regex;
+use unicode_xid::UnicodeXID;
 
 #[derive(Clone, Debug)]
 pub struct Node {
@@ -576,8 +585,8 @@ impl PEG {
                 }
 
                 res.push_str(&format!(
-                    r#"
-            regex_{}: Regex::new("^{}").unwrap(),"#,
+                    r##"
+            regex_{}: Regex::new(r#"^{}"#).unwrap(),"##,
                     name, r,
                 ));
             }
@@ -667,6 +676,43 @@ impl PEG {
         } else {
             Err(pos)
         }
+    }"#,
+            );
+        }
+
+        if self.builtins.contains_key(&ast::Expression::XidIdentifier) {
+            res.push_str(
+                r#"
+
+    fn builtin_xid_identifier(&mut self, pos: usize, input: &str) -> Result<Node, usize> {
+        let key = (pos, Rule::XID_IDENTIFIER);
+
+        if let Some(res) = self.rule_memo.get(&key) {{
+            return res.clone();
+        }}
+
+        let mut chars = input[pos..].char_indices();
+        let mut end = pos;
+        let res = if let Some((_, ch)) = chars.next() {
+            if UnicodeXID::is_xid_start(ch) {
+                while {
+                    if let Some((off, ch)) = chars.next() {
+                        end = pos + off;
+                        UnicodeXID::is_xid_continue(ch)
+                    } else {
+                        false
+                    }
+                } {}
+            }
+
+            Ok(Node::new(Rule::XID_IDENTIFIER, pos, end))
+        } else {
+            Err(pos)
+        };
+
+        self.rule_memo.insert(key, res.clone());
+
+        res
     }"#,
             );
         }

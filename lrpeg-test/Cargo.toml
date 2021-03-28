@@ -9,3 +9,4 @@ path = "../lrpeg"
 
 [dependencies]
 regex = "1"
+unicode-xid = "0.2"

@@ -18,6 +18,7 @@ pub enum Expression {
     Dot,
     Whitespace,
     EOI,
+    XidIdentifier, // unicode identifier
     Definition(usize),
     MemoDefinition(usize),
     StringLiteral(String),

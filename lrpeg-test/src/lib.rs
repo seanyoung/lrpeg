@@ -132,6 +132,11 @@ fn irp() {
 
     assert_eq!(
         parse("{38.123k, 550 }"),
-        "(irp, \"{38.123k, 550 }\", (WHITESPACE, \"\"), (Terminal, \"{\"), (WHITESPACE, \"\"), (general_item, \"38.123k\", (float_number, \"38.123\", (Terminal, \"38\"), (Terminal, \".\"), (Terminal, \"123\"))), (WHITESPACE, \"\"), (Terminal, \"k\"), (WHITESPACE, \"\"))), (Terminal, \", 550 \", (Terminal, \", 550 \", (Terminal, \",\"), (WHITESPACE, \" \"), (general_item, \"550 \", (Terminal, \"550\"), (WHITESPACE, \" \"))))))), (Terminal, \"}\"), (WHITESPACE, \"\"), (EOI, \"\")))"
+        "(irp, \"{38.123k, 550 }\", (general_spec, \"{38.123k, 550 }\", (WHITESPACE, \"\"), (Terminal, \"{\"), (WHITESPACE, \"\"), (general_item, \"38.123k\", (Terminal, \"38.123\"), (WHITESPACE, \"\"), (Terminal, \"k\"), (WHITESPACE, \"\"))), (Terminal, \", 550 \", (Terminal, \", 550 \", (Terminal, \",\"), (WHITESPACE, \" \"), (general_item, \"550 \", (Terminal, \"550\"), (WHITESPACE, \" \"))))))), (Terminal, \"}\"), (WHITESPACE, \"\"))), (Terminal, \"\"), (EOI, \"\")))"
+    );
+
+    assert_eq!(
+        parse("{msb} [ foo:0..255 ]"),
+        "(irp, \"{msb} [ foo:0..255 ]\", (general_spec, \"{msb} \", (WHITESPACE, \"\"), (Terminal, \"{\"), (WHITESPACE, \"\"), (general_item, \"msb\", (Terminal, \"msb\"), (WHITESPACE, \"\"))), (Terminal, \"\"), (Terminal, \"}\"), (WHITESPACE, \" \"))), (parameter_specs, \"[ foo:0..255 ]\", (Terminal, \"[\"), (WHITESPACE, \" \"), (parameter_spec, \"foo:0..255 \", (XID_IDENTIFIER, \"foo\"), (WHITESPACE, \"\"), (Terminal, \"\"), (WHITESPACE, \"\"), (Terminal, \":\"), (WHITESPACE, \"\"), (Terminal, \"0\"), (WHITESPACE, \"\"), (Terminal, \"..\"), (WHITESPACE, \"\"), (Terminal, \"255\"), (WHITESPACE, \" \"))), (Terminal, \"\"), (Terminal, \"]\"), (WHITESPACE, \"\"))), (EOI, \"\")))"
     );
 }

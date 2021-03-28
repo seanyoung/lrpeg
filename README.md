@@ -67,3 +67,5 @@ good enough.
 - Better parse error information (now only the error offset is returned)
 - Better documentation
 - Make generator into rust macro
+- Detect unused rules
+- Detect unreachable alternatives

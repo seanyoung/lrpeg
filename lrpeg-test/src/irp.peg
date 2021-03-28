@@ -1,14 +1,27 @@
-irp <- WHITESPACE "{" WHITESPACE general_item ("," WHITESPACE general_item)* "}" WHITESPACE EOI;
+irp <- general_spec parameter_specs? EOI;
+
+general_spec <- WHITESPACE "{" WHITESPACE general_item ("," WHITESPACE general_item)* "}" WHITESPACE;
 
 general_item <- "msb" WHITESPACE
     / "lsb" WHITESPACE
-    / float_number WHITESPACE "u" WHITESPACE
-    / float_number WHITESPACE "p" WHITESPACE
-    / float_number WHITESPACE "k" WHITESPACE
-    / float_number WHITESPACE "%" WHITESPACE
-    / float_number WHITESPACE;
+    / number_decimals WHITESPACE "u" WHITESPACE
+    / number_decimals WHITESPACE "p" WHITESPACE
+    / number_decimals WHITESPACE "k" WHITESPACE
+    / number_decimals WHITESPACE "%" WHITESPACE
+    / number_decimals WHITESPACE;
 
-float_number <- number "." number
-    / number;
+number_decimals <- r"\\d+.\\d+"
+    / r"\\d+";
 
-number <- r"[0-9]+";
+parameter_specs <- "[" WHITESPACE parameter_spec ("," WHITESPACE parameter_spec)* "]" WHITESPACE
+    / "[" WHITESPACE "]" WHITESPACE;
+
+parameter_spec <- XID_IDENTIFIER WHITESPACE "@"? WHITESPACE ":" WHITESPACE number WHITESPACE ".." WHITESPACE number WHITESPACE;
+
+number <- r"0x[0-9a-fA-F]+"
+    / r"0b[01]+"
+    / r"\\d+"
+    / "UINT8_MAX"
+    / "UINT16_MAX"
+    / "UINT32_MAX"
+    / "UINT64_MAX";
