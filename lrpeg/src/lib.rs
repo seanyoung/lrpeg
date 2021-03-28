@@ -703,9 +703,11 @@ impl PEG {
                         false
                     }
                 } {}
-            }
 
-            Ok(Node::new(Rule::XID_IDENTIFIER, pos, end))
+                Ok(Node::new(Rule::XID_IDENTIFIER, pos, end))
+            } else {
+                Err(pos)
+            }
         } else {
             Err(pos)
         };

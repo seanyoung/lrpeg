@@ -16,7 +16,7 @@ number_decimals <- r"\\d+.\\d+"
 parameter_specs <- "[" WHITESPACE parameter_spec ("," WHITESPACE parameter_spec)* "]" WHITESPACE
     / "[" WHITESPACE "]" WHITESPACE;
 
-parameter_spec <- XID_IDENTIFIER WHITESPACE "@"? WHITESPACE ":" WHITESPACE number WHITESPACE ".." WHITESPACE number WHITESPACE;
+parameter_spec <- XID_IDENTIFIER WHITESPACE "@"? WHITESPACE ":" WHITESPACE number WHITESPACE ".." WHITESPACE number WHITESPACE ('=' expression)? WHITESPACE;
 
 number <- r"0x[0-9a-fA-F]+"
     / r"0b[01]+"
@@ -25,3 +25,33 @@ number <- r"0x[0-9a-fA-F]+"
     / "UINT16_MAX"
     / "UINT32_MAX"
     / "UINT64_MAX";
+
+primary_item <- number
+    / XID_IDENTIFIER
+    / "(" expression ")";
+
+bit_field <- "~"? primary_item ":" "-"? primary_item (":" primary_item)?
+    / "~"? primary_item "::" primary_item;
+
+expression <- "~" expression
+    / "!" expression
+    / "-" expression
+    / "#" expression
+    / expression1 "**" expression
+    / expression1;
+
+expression1 <- expression1 ('*' / '/' / '%') expression1
+    / expression1 ('+' / '-') expression1
+    / expression1 ('<<' / '>>') expression1
+    / expression1 ('<=' / '>=' / '<' / '>') expression1
+    / expression1 ('!=' / '==') expression1
+    / expression1 '&' expression1
+    / expression1 '^' expression1
+    / expression1 '|' expression1
+    / expression1 '&&' expression1
+    / expression1 '||' expression1
+    / expression2 '?' expression1 ':' expression1
+    / expression2;
+
+expression2 <- bit_field
+    / primary_item;

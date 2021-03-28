@@ -136,7 +136,12 @@ fn irp() {
     );
 
     assert_eq!(
-        parse("{msb} [ foo:0..255 ]"),
-        "(irp, \"{msb} [ foo:0..255 ]\", (general_spec, \"{msb} \", (WHITESPACE, \"\"), (Terminal, \"{\"), (WHITESPACE, \"\"), (general_item, \"msb\", (Terminal, \"msb\"), (WHITESPACE, \"\"))), (Terminal, \"\"), (Terminal, \"}\"), (WHITESPACE, \" \"))), (parameter_specs, \"[ foo:0..255 ]\", (Terminal, \"[\"), (WHITESPACE, \" \"), (parameter_spec, \"foo:0..255 \", (XID_IDENTIFIER, \"foo\"), (WHITESPACE, \"\"), (Terminal, \"\"), (WHITESPACE, \"\"), (Terminal, \":\"), (WHITESPACE, \"\"), (Terminal, \"0\"), (WHITESPACE, \"\"), (Terminal, \"..\"), (WHITESPACE, \"\"), (Terminal, \"255\"), (WHITESPACE, \" \"))), (Terminal, \"\"), (Terminal, \"]\"), (WHITESPACE, \"\"))), (EOI, \"\")))"
+        parse("{msb} [ foo:0..0x255=#(0xa::2)]"),
+        "(irp, \"{msb} [ foo:0..0x255=#(0xa::2)]\", (general_spec, \"{msb} \", (WHITESPACE, \"\"), (Terminal, \"{\"), (WHITESPACE, \"\"), (general_item, \"msb\", (Terminal, \"msb\"), (WHITESPACE, \"\"))), (Terminal, \"\"), (Terminal, \"}\"), (WHITESPACE, \" \"))), (parameter_specs, \"[ foo:0..0x255=#(0xa::2)]\", (Terminal, \"[\"), (WHITESPACE, \" \"), (parameter_spec, \"foo:0..0x255=#(0xa::2)\", (XID_IDENTIFIER, \"foo\"), (WHITESPACE, \"\"), (Terminal, \"\"), (WHITESPACE, \"\"), (Terminal, \":\"), (WHITESPACE, \"\"), (Terminal, \"0\"), (WHITESPACE, \"\"), (Terminal, \"..\"), (WHITESPACE, \"\"), (Terminal, \"0x255\"), (WHITESPACE, \"\"), (Terminal, \"=#(0xa::2)\", (Terminal, \"=\"), (expression, \"#(0xa::2)\", (Terminal, \"#\"), (primary_item, \"(0xa::2)\", (Terminal, \"(\"), (bit_field, \"0xa::2\", (Terminal, \"\"), (Terminal, \"0xa\"), (Terminal, \"::\"), (Terminal, \"2\"))), (Terminal, \")\"))))))), (WHITESPACE, \"\"))), (Terminal, \"\"), (Terminal, \"]\"), (WHITESPACE, \"\"))), (EOI, \"\")))"
+    );
+
+    assert_eq!(
+        parse("{msb} [ foo:0..0x255=a+b*c]"),
+        "(irp, \"{msb} [ foo:0..0x255=a+b*c]\", (general_spec, \"{msb} \", (WHITESPACE, \"\"), (Terminal, \"{\"), (WHITESPACE, \"\"), (general_item, \"msb\", (Terminal, \"msb\"), (WHITESPACE, \"\"))), (Terminal, \"\"), (Terminal, \"}\"), (WHITESPACE, \" \"))), (parameter_specs, \"[ foo:0..0x255=a+b*c]\", (Terminal, \"[\"), (WHITESPACE, \" \"), (parameter_spec, \"foo:0..0x255=a+b*c\", (XID_IDENTIFIER, \"foo\"), (WHITESPACE, \"\"), (Terminal, \"\"), (WHITESPACE, \"\"), (Terminal, \":\"), (WHITESPACE, \"\"), (Terminal, \"0\"), (WHITESPACE, \"\"), (Terminal, \"..\"), (WHITESPACE, \"\"), (Terminal, \"0x255\"), (WHITESPACE, \"\"), (Terminal, \"=a+b*c\", (Terminal, \"=\"), (expression1, \"a+b*c\", (XID_IDENTIFIER, \"a\"), (Terminal, \"+\"), (expression1, \"b*c\", (XID_IDENTIFIER, \"b\"), (Terminal, \"*\"), (XID_IDENTIFIER, \"c\"))))))), (WHITESPACE, \"\"))), (Terminal, \"\"), (Terminal, \"]\"), (WHITESPACE, \"\"))), (EOI, \"\")))"
     );
 }
