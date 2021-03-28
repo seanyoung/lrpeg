@@ -3,9 +3,10 @@
 The existing PEG parser generators for rust do not allow left recursion,
 which makes it very awkward to write grammars. It is possible to write
 a PEG parser generator which allows for
-[left recursion](http://www.vpri.org/pdf/tr2007002_packrat.pdf). This
-implementation uses a simpler algorithm to implement indirect left
-recursion.
+[left recursion](http://www.vpri.org/pdf/tr2007002_packrat.pdf),
+just as [python now uses](https://medium.com/@gvanrossum_83706/left-recursive-peg-grammars-65dab3c580e1).
+
+See [IRP Grammar](https://github.com/seanyoung/lrpeg/blob/main/lrpeg-test/src/irp.peg) for a complete lrpeg grammar for IRP.
 
 ## How to use lrpeg
 
@@ -14,6 +15,10 @@ Add lrpeg to your Cargo.toml in build-dependencies:
 ```
 [build-dependencies]
 lrpeg = "0"
+
+[dependencies]
+regex = "1"
+unicode-xid = "0.2"
 ```
 
 Now add a `build.rs` to the root of your project, containing:

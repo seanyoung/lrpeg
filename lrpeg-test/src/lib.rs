@@ -130,18 +130,6 @@ fn irp() {
 
     let mut parse = |s: &str| -> String { p.parse(s).unwrap().print_to_string(s) };
 
-    assert_eq!(
-        parse("{38.123k, 550 }"),
-        "(irp, \"{38.123k, 550 }\", (general_spec, \"{38.123k, 550 }\", (WHITESPACE, \"\"), (Terminal, \"{\"), (WHITESPACE, \"\"), (general_item, \"38.123k\", (Terminal, \"38.123\"), (WHITESPACE, \"\"), (Terminal, \"k\"), (WHITESPACE, \"\"))), (Terminal, \", 550 \", (Terminal, \", 550 \", (Terminal, \",\"), (WHITESPACE, \" \"), (general_item, \"550 \", (Terminal, \"550\"), (WHITESPACE, \" \"))))))), (Terminal, \"}\"), (WHITESPACE, \"\"))), (Terminal, \"\"), (EOI, \"\")))"
-    );
-
-    assert_eq!(
-        parse("{msb} [ foo:0..0x255=#(0xa::2)]"),
-        "(irp, \"{msb} [ foo:0..0x255=#(0xa::2)]\", (general_spec, \"{msb} \", (WHITESPACE, \"\"), (Terminal, \"{\"), (WHITESPACE, \"\"), (general_item, \"msb\", (Terminal, \"msb\"), (WHITESPACE, \"\"))), (Terminal, \"\"), (Terminal, \"}\"), (WHITESPACE, \" \"))), (parameter_specs, \"[ foo:0..0x255=#(0xa::2)]\", (Terminal, \"[\"), (WHITESPACE, \" \"), (parameter_spec, \"foo:0..0x255=#(0xa::2)\", (XID_IDENTIFIER, \"foo\"), (WHITESPACE, \"\"), (Terminal, \"\"), (WHITESPACE, \"\"), (Terminal, \":\"), (WHITESPACE, \"\"), (Terminal, \"0\"), (WHITESPACE, \"\"), (Terminal, \"..\"), (WHITESPACE, \"\"), (Terminal, \"0x255\"), (WHITESPACE, \"\"), (Terminal, \"=#(0xa::2)\", (Terminal, \"=\"), (expression, \"#(0xa::2)\", (Terminal, \"#\"), (primary_item, \"(0xa::2)\", (Terminal, \"(\"), (bit_field, \"0xa::2\", (Terminal, \"\"), (Terminal, \"0xa\"), (Terminal, \"::\"), (Terminal, \"2\"))), (Terminal, \")\"))))))), (WHITESPACE, \"\"))), (Terminal, \"\"), (Terminal, \"]\"), (WHITESPACE, \"\"))), (EOI, \"\")))"
-    );
-
-    assert_eq!(
-        parse("{msb} [ foo:0..0x255=a+b*c]"),
-        "(irp, \"{msb} [ foo:0..0x255=a+b*c]\", (general_spec, \"{msb} \", (WHITESPACE, \"\"), (Terminal, \"{\"), (WHITESPACE, \"\"), (general_item, \"msb\", (Terminal, \"msb\"), (WHITESPACE, \"\"))), (Terminal, \"\"), (Terminal, \"}\"), (WHITESPACE, \" \"))), (parameter_specs, \"[ foo:0..0x255=a+b*c]\", (Terminal, \"[\"), (WHITESPACE, \" \"), (parameter_spec, \"foo:0..0x255=a+b*c\", (XID_IDENTIFIER, \"foo\"), (WHITESPACE, \"\"), (Terminal, \"\"), (WHITESPACE, \"\"), (Terminal, \":\"), (WHITESPACE, \"\"), (Terminal, \"0\"), (WHITESPACE, \"\"), (Terminal, \"..\"), (WHITESPACE, \"\"), (Terminal, \"0x255\"), (WHITESPACE, \"\"), (Terminal, \"=a+b*c\", (Terminal, \"=\"), (expression1, \"a+b*c\", (XID_IDENTIFIER, \"a\"), (Terminal, \"+\"), (expression1, \"b*c\", (XID_IDENTIFIER, \"b\"), (Terminal, \"*\"), (XID_IDENTIFIER, \"c\"))))))), (WHITESPACE, \"\"))), (Terminal, \"\"), (Terminal, \"]\"), (WHITESPACE, \"\"))), (EOI, \"\")))"
-    );
+    parse("{37k,432}<1,-1|1,-3>(8,-4,67:8,83:8,X:4,D:4,S:8,F:8,T:8,1,-100,(8,-8,1,-100)*) {T=D+S:4:0+S:4:4+F:4:0+F:4:4} [D:0..15,S:0..255,F:0..255,X:0..15=1]");
+    parse("{40k,520,msb}<1,-10|1,-1,1,-8>(S:1,<1:2|2:2>(F:D),-90m)*{D=7}[S:0..1,F:0..255]");
 }

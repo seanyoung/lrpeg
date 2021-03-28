@@ -1,4 +1,4 @@
-irp <- general_spec parameter_specs? EOI;
+irp <- general_spec bitspec_irstream definitions* parameter_specs? EOI;
 
 general_spec <- WHITESPACE "{" WHITESPACE general_item ("," WHITESPACE general_item)* "}" WHITESPACE;
 
@@ -10,8 +10,41 @@ general_item <- "msb" WHITESPACE
     / number_decimals WHITESPACE "%" WHITESPACE
     / number_decimals WHITESPACE;
 
-number_decimals <- r"\\d+.\\d+"
+number_decimals <- r"\\d+\\.\\d+"
     / r"\\d+";
+
+definitions <- '{' definition ("," WHITESPACE definition)* '}' WHITESPACE;
+
+definition <- XID_IDENTIFIER  WHITESPACE '=' WHITESPACE expression WHITESPACE;
+
+bitspec <- "<" WHITESPACE bare_irstream ("|" WHITESPACE bare_irstream)* ">" WHITESPACE;
+
+bare_irstream <- irstream_item ("," irstream_item)*;
+
+irstream <- '(' bare_irstream ')' repeat_marker?;
+
+repeat_marker <- '*' / '+' / number '+'?;
+
+irstream_item <- variation
+    / bit_field
+    / definition
+    / duration
+    / irstream
+    / bitspec_irstream;
+
+bitspec_irstream <- bitspec irstream WHITESPACE;
+
+duration <- flash / gap / extent;
+
+flash <- name_or_number ('m' / 'u' / 'p')?;
+gap <- '-' name_or_number ('m' / 'u' / 'p')?;
+extent <- '^' name_or_number ('m' / 'u' / 'p')?;
+
+name_or_number <- XID_IDENTIFIER / number_decimals;
+
+variation <- alternative alternative alternative?;
+
+alternative <- '[' bare_irstream ']';
 
 parameter_specs <- "[" WHITESPACE parameter_spec ("," WHITESPACE parameter_spec)* "]" WHITESPACE
     / "[" WHITESPACE "]" WHITESPACE;
