@@ -1,4 +1,11 @@
+
+![crates.io](https://img.shields.io/crates/v/lrpeg.svg)
+[![CI](https://github.com/seanyoung/lrpeg/workflows/test/badge.svg)](https://github.com/seanyoung/lrpeg/actions)
+[![license](https://img.shields.io/github/license/seanyoung/lrpeg.svg)](LICENSE)
+
 # Left Recursive Parsing Expression Grammar (PEG)
+
+lrpeg allows left recursive rules, and uses ratpack parsing for speed.
 
 The existing PEG parser generators for rust do not allow left recursion,
 which makes it very awkward to write grammars. It is possible to write
@@ -6,7 +13,8 @@ a PEG parser generator which allows for
 [left recursion](http://www.vpri.org/pdf/tr2007002_packrat.pdf),
 just as [python now uses](https://medium.com/@gvanrossum_83706/left-recursive-peg-grammars-65dab3c580e1).
 
-See [IRP Grammar](https://github.com/seanyoung/lrpeg/blob/main/lrpeg-test/src/irp.peg) for a complete lrpeg grammar for IRP.
+See [IRP Grammar](https://github.com/seanyoung/lrpeg/blob/main/lrpeg-test/src/irp.peg) for a complete lrpeg grammar for
+[IRP](http://hifi-remote.com/wiki/index.php?title=IRP_Notation).
 
 ## How to use lrpeg
 
