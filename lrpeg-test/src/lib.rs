@@ -1,11 +1,18 @@
 #![cfg_attr(not(test), allow(dead_code, unused_imports))]
 
+#[rustfmt::skip]
 mod calculator;
+#[rustfmt::skip]
 mod direct_left_recursive;
+#[rustfmt::skip]
 mod indirect_left_recursive;
+#[rustfmt::skip]
 mod irp;
+#[rustfmt::skip]
 mod repeat;
+#[rustfmt::skip]
 mod test1;
+#[rustfmt::skip]
 mod test2;
 
 #[test]
