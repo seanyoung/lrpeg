@@ -337,19 +337,87 @@ impl Generator {
                 res
             }
             ast::Expression::Whitespace => {
-                format!(r#"self.builtin_whitespace(pos, input, {})"#, alt)
+                if let Some(rule) = rule {
+                    format!(
+                        r#"self.builtin_whitespace(pos, input, None)
+                        .map(|node| {{ Node {{
+                            rule: Rule::{},
+                            start: node.start,
+                            end: node.end,
+                            children: vec![node],
+                            alternative: {},
+                        }}
+                    }})"#,
+                        rule, alt
+                    )
+                } else {
+                    format!(r#"self.builtin_whitespace(pos, input, {})"#, alt)
+                }
             }
-            ast::Expression::EOI => format!(r#"self.builtin_eoi(pos, input, {})"#, alt),
-            ast::Expression::Dot => format!(r#"self.builtin_dot(pos, input, {})"#, alt),
+            ast::Expression::EOI => {
+                if let Some(rule) = rule {
+                    format!(
+                        r#"self.builtin_eoi(pos, input, None)
+                        .map(|node| {{ Node {{
+                            rule: Rule::{},
+                            start: node.start,
+                            end: node.end,
+                            children: vec![node],
+                            alternative: {},
+                        }}
+                    }})"#,
+                        rule, alt
+                    )
+                } else {
+                    format!(r#"self.builtin_eoi(pos, input, {})"#, alt)
+                }
+            }
+            ast::Expression::Dot => {
+                if let Some(rule) = rule {
+                    format!(
+                        r#"self.builtin_dot(pos, input, None)
+                        .map(|node| {{ Node {{
+                            rule: Rule::{},
+                            start: node.start,
+                            end: node.end,
+                            children: vec![node],
+                            alternative: {},
+                        }}
+                    }})"#,
+                        rule, alt
+                    )
+                } else {
+                    format!(r#"self.builtin_dot(pos, input, {})"#, alt)
+                }
+            }
             ast::Expression::XidIdentifier => {
-                format!(r#"self.builtin_xid_identifier(pos, input, {})"#, alt)
+                if let Some(rule) = rule {
+                    format!(
+                        r#"self.builtin_xid_identifier(pos, input, None)
+                        .map(|node| {{ Node {{
+                            rule: Rule::{},
+                            start: node.start,
+                            end: node.end,
+                            children: vec![node],
+                            alternative: {},
+                        }}
+                    }})"#,
+                        rule, alt
+                    )
+                } else {
+                    format!(r#"self.builtin_xid_identifier(pos, input, {})"#, alt)
+                }
             }
             ast::Expression::StringLiteral(_) | ast::Expression::Regex(_) => {
                 let terminal = self.terminals.get(expr).unwrap();
 
                 format!(
-                    r#"self.match_terminal(pos, input, Terminal::{}, {}).ok_or(pos)"#,
-                    terminal, alt
+                    r#"self.match_terminal(pos, input, Terminal::{})
+                    .map(|end| Node::new(Rule::{}, pos, end, {}))
+                    .ok_or(pos)"#,
+                    terminal,
+                    rule.unwrap_or("Terminal"),
+                    alt
                 )
             }
             ast::Expression::Alternatives(list) => {
@@ -780,12 +848,11 @@ impl PEG {
         res.push_str(
             r#"
 
-    fn match_terminal(&mut self, pos: usize, input: &str, terminal: Terminal, alt: Option<u16>) -> Option<Node> {
+    fn match_terminal(&mut self, pos: usize, input: &str, terminal: Terminal) -> Option<usize> {
         let key = (pos, terminal);
-        let start = pos;
 
         if let Some(res) = self.terminal_memo.get(&key) {
-            return res.map(|end | Node::new(Rule::Terminal, start, end, alt))
+            return *res;
         }
 
         let res = if pos > input.len() {
@@ -849,7 +916,7 @@ impl PEG {
         // Note that failure to match is also cached using None
         self.terminal_memo.insert(key, res);
 
-        res.map(|end| Node::new(Rule::Terminal, start, end, alt))
+        res
     }
 }
 "#,
