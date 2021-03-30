@@ -616,6 +616,10 @@ impl Node {
         )
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.start == self.end
+    }
+
     pub fn as_str<'s>(&self, input: &'s str) -> &'s str {
         &input[self.start..self.end]
     }
