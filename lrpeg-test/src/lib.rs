@@ -27,10 +27,25 @@ fn test1() {
 fn test2() {
     let mut p = test2::PEG::new();
 
-    assert!(p.parse("barf darf").is_ok());
+    assert_eq!(
+        test2::PEG::new()
+            .parse("barf darf")
+            .unwrap()
+            .print_to_string("barf darf"),
+        "(foo, alt=0, \"barf darf\", (Terminal, \"barf\"), (Terminal, \" \"), (Terminal, \"darf\"))"
+    );
+
     assert!(p.parse("berf").is_err());
 
     // test dot. Also make sure that dot steps over non-ascii
+    assert_eq!(
+        test2::PEG::new()
+            .parse("carf erf")
+            .unwrap()
+            .print_to_string("carf erf"),
+        "(foo, alt=1, \"carf erf\", (carf, \"carf erf\", (Terminal, \"carf\"), (Dot, \" \"), (Terminal, \"erf\", (Terminal, \"erf\"))))"
+    );
+
     assert!(p.parse("carf erf").is_ok());
     assert!(p.parse("carfxerf").is_ok());
     assert!(p.parse("carf").is_err());
@@ -63,21 +78,27 @@ fn calculator() {
 
     let mut parse = |s: &str| -> String { p.parse(s).unwrap().print_to_string(s) };
 
-    assert_eq!(parse("1"), "(Terminal, \"1\")");
+    assert_eq!(
+        parse("1"),
+        "(expr, alt=2, \"1\", (term, alt=3, \"1\", (Terminal, \"1\")))"
+    );
     assert_eq!(
         parse("1+1"),
-        "(term, \"1+1\", (Terminal, \"1\"), (Terminal, \"+\"), (Terminal, \"1\")))"
+        "(expr, alt=2, \"1+1\", (term, alt=0, \"1+1\", (term, \"1\", (Terminal, \"1\")), (Terminal, \"+\"), (Terminal, \"1\", (term, alt=3, \"1\", (Terminal, \"1\")))))"
     );
     assert_eq!(
         parse("1*1"),
-        "(expr, \"1*1\", (Terminal, \"1\"), (Terminal, \"*\"), (Terminal, \"1\")))"
+        "(expr, alt=0, \"1*1\", (Terminal, \"1\", (term, alt=3, \"1\", (Terminal, \"1\"))), (Terminal, \"*\"), (Terminal, \"1\", (term, alt=3, \"1\", (Terminal, \"1\"))))"
     );
     assert_eq!(
         parse("1*100"),
-        "(expr, \"1*100\", (Terminal, \"1\"), (Terminal, \"*\"), (Terminal, \"100\")))"
+        "(expr, alt=0, \"1*100\", (Terminal, \"1\", (term, alt=3, \"1\", (Terminal, \"1\"))), (Terminal, \"*\"), (Terminal, \"100\", (term, alt=3, \"100\", (Terminal, \"100\"))))"
     );
-    assert_eq!(parse("(1+1)"), "(term, \"(1+1)\", (Terminal, \"(\"), (term, \"1+1\", (Terminal, \"1\"), (Terminal, \"+\"), (Terminal, \"1\"))), (Terminal, \")\")))");
-    assert_eq!(parse("1*(1+1"), "(Terminal, \"1\")");
+    assert_eq!(parse("(1+1)"), "(expr, alt=2, \"(1+1)\", (term, alt=2, \"(1+1)\", (Terminal, \"(\"), (Terminal, \"1+1\", (expr, alt=2, \"1+1\", (term, alt=0, \"1+1\", (term, \"1\", (Terminal, \"1\")), (Terminal, \"+\"), (Terminal, \"1\", (term, alt=3, \"1\", (Terminal, \"1\")))))), (Terminal, \")\")))");
+    assert_eq!(
+        parse("1*(1+1"),
+        "(expr, alt=2, \"1\", (term, alt=3, \"1\", (Terminal, \"1\")))"
+    );
 }
 
 #[test]
@@ -88,41 +109,41 @@ fn repeat() {
 
     assert_eq!(
         parse("abc"),
-        "(foo, \"abc\", (Terminal, \"a\"), (Terminal, \"b\"), (Terminal, \"c\")))"
+        "(foo, alt=0, \"abc\", (Terminal, \"a\"), (Terminal, \"b\"), (Terminal, \"c\"))"
     );
     assert_eq!(
         parse("ac"),
-        "(foo, \"ac\", (Terminal, \"a\"), (Terminal, \"\"), (Terminal, \"c\")))"
+        "(foo, alt=0, \"ac\", (Terminal, \"a\"), (Terminal, \"\"), (Terminal, \"c\"))"
     );
 
     assert_eq!(
         parse("xyyyyz"),
-        "(foo, \"xyyyyz\", (Terminal, \"x\"), (Terminal, \"yyyy\", (Terminal, \"y\"), (Terminal, \"y\"), (Terminal, \"y\"), (Terminal, \"y\"))), (Terminal, \"z\")))"
+        "(foo, alt=1, \"xyyyyz\", (Terminal, \"x\"), (Terminal, \"yyyy\", (Terminal, \"y\"), (Terminal, \"y\"), (Terminal, \"y\"), (Terminal, \"y\")), (Terminal, \"z\"))"
     );
 
     assert_eq!(
         parse("xz"),
-        "(foo, \"xz\", (Terminal, \"x\"), (Terminal, \"\"), (Terminal, \"z\")))"
+        "(foo, alt=1, \"xz\", (Terminal, \"x\"), (Terminal, \"\"), (Terminal, \"z\"))"
     );
 
     assert_eq!(
         parse("def"),
-        "(foo, \"def\", (Terminal, \"d\"), (Terminal, \"e\", (Terminal, \"e\"))), (Terminal, \"f\")))"
+        "(foo, alt=2, \"def\", (Terminal, \"d\"), (Terminal, \"e\", (Terminal, \"e\")), (Terminal, \"f\"))"
     );
 
     assert_eq!(
         parse("deeeef"),
-        "(foo, \"deeeef\", (Terminal, \"d\"), (Terminal, \"eeee\", (Terminal, \"e\"), (Terminal, \"e\"), (Terminal, \"e\"), (Terminal, \"e\"))), (Terminal, \"f\")))"
+        "(foo, alt=2, \"deeeef\", (Terminal, \"d\"), (Terminal, \"eeee\", (Terminal, \"e\"), (Terminal, \"e\"), (Terminal, \"e\"), (Terminal, \"e\")), (Terminal, \"f\"))"
     );
 
     assert_eq!(
         parse("kx"),
-        "(foo, \"kx\", (Terminal, \"k\"), (Terminal, \"\"), (Dot, \"x\")))"
+        "(foo, alt=3, \"kx\", (Terminal, \"k\"), (Terminal, \"\"), (Dot, \"x\"))"
     );
 
     assert_eq!(
         parse("qr"),
-        "(foo, \"qr\", (Terminal, \"q\"), (Terminal, \"\"), (Dot, \"r\")))"
+        "(foo, alt=4, \"qr\", (Terminal, \"q\"), (Terminal, \"\"), (Dot, \"r\"))"
     );
 
     assert_eq!(p.parse("qs").unwrap_err(), 1);

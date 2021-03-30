@@ -179,7 +179,7 @@ impl Generator {
             def.name, def.name,
         );
 
-        res.push_str(&self.emit_expr(&def.sequence, &def.name, grammar));
+        res.push_str(&self.emit_expr(&def.sequence, &def.name, "None", grammar));
 
         res.push_str(
             r#";
@@ -240,7 +240,12 @@ impl Generator {
                 }
             }
 
-            res.push_str(&self.emit_expr(&ast::Expression::Alternatives(list), &def.name, grammar));
+            res.push_str(&self.emit_expr(
+                &ast::Expression::Alternatives(list),
+                &def.name,
+                "None",
+                grammar,
+            ));
         } else {
             res.push_str(
                 r#"
@@ -251,7 +256,7 @@ impl Generator {
         loop {
             let r = "#,
             );
-            res.push_str(&self.emit_expr(&def.sequence, &def.name, grammar));
+            res.push_str(&self.emit_expr(&def.sequence, &def.name, "None", grammar));
         }
 
         res.push_str(
@@ -276,7 +281,13 @@ impl Generator {
         res
     }
 
-    fn emit_expr(&self, expr: &ast::Expression, rule: &str, grammar: &ast::Grammar) -> String {
+    fn emit_expr(
+        &self,
+        expr: &ast::Expression,
+        rule: &str,
+        alt: &str,
+        grammar: &ast::Grammar,
+    ) -> String {
         match expr {
             ast::Expression::List(list) => {
                 let mut iter = list.iter();
@@ -289,7 +300,7 @@ impl Generator {
             let start = pos;
 
             {}"#,
-                    self.emit_expr(first, "Terminal", grammar)
+                    self.emit_expr(first, "Terminal", "None", grammar)
                 );
 
                 for expr in iter {
@@ -300,7 +311,7 @@ impl Generator {
                 list.push(node);
                 {}
             }})"#,
-                        self.emit_expr(expr, "Terminal", grammar),
+                        self.emit_expr(expr, "Terminal", "None", grammar),
                     ));
                 }
 
@@ -315,40 +326,43 @@ impl Generator {
                     start,
                     end,
                     children: list,
+                    alternative: {},
                 }}
             }})
         }}"#,
-                    rule,
+                    rule, alt,
                 ));
 
                 res
             }
-            ast::Expression::Whitespace => String::from(r#"self.builtin_whitespace(pos, input)"#),
-            ast::Expression::EOI => String::from(r#"self.builtin_eoi(pos, input)"#),
-            ast::Expression::Dot => String::from(r#"self.builtin_dot(pos, input)"#),
+            ast::Expression::Whitespace => {
+                format!(r#"self.builtin_whitespace(pos, input, {})"#, alt)
+            }
+            ast::Expression::EOI => format!(r#"self.builtin_eoi(pos, input, {})"#, alt),
+            ast::Expression::Dot => format!(r#"self.builtin_dot(pos, input, {})"#, alt),
             ast::Expression::XidIdentifier => {
-                String::from(r#"self.builtin_xid_identifier(pos, input)"#)
+                format!(r#"self.builtin_xid_identifier(pos, input, {})"#, alt)
             }
             ast::Expression::StringLiteral(_) | ast::Expression::Regex(_) => {
                 let terminal = self.terminals.get(expr).unwrap();
 
                 format!(
-                    r#"self.match_terminal(pos, input, Terminal::{}).ok_or(pos)"#,
-                    terminal
+                    r#"self.match_terminal(pos, input, Terminal::{}, {}).ok_or(pos)"#,
+                    terminal, alt
                 )
             }
             ast::Expression::Alternatives(list) => {
-                let mut iter = list.iter();
+                let mut iter = list.iter().enumerate();
 
-                let first = iter.next().unwrap();
+                let (_, first) = iter.next().unwrap();
 
-                let mut res = self.emit_expr(first, rule, grammar);
+                let mut res = self.emit_expr(first, rule, "Some(0)", grammar);
 
-                for expr in iter {
+                for (alt, expr) in iter {
                     res.push_str(&format!(
                         r#"
             .or_else(|_| {})"#,
-                        self.emit_expr(expr, rule, grammar),
+                        self.emit_expr(expr, rule, &format!("Some({})", alt), grammar),
                     ));
                 }
 
@@ -356,39 +370,55 @@ impl Generator {
             }
             ast::Expression::Definition(rule_no) => {
                 format!(
-                    r#"self.rule_{}(pos, input)"#,
-                    grammar.definitions[*rule_no].name
+                    r#"self.rule_{}(pos, input)
+                        .map(|node| {{ Node {{
+                            rule: Rule::{},
+                            start: node.start,
+                            end: node.end,
+                            children: vec![node],
+                            alternative: {},
+                        }}
+                    }})"#,
+                    grammar.definitions[*rule_no].name, rule, alt,
                 )
             }
             ast::Expression::MemoDefinition(rule_no) => {
                 format!(
                     r#"match self.rule_memo.get(&(pos, Rule::{})) {{
-                    Some(e) => e.clone(),
+                    Some(e) => {{
+                        let mut e = e.clone();
+                        if let Ok(res) = &mut e {{
+                            res.alternative = {};
+                        }}
+                        e
+                    }},
                     None => Err(pos),
                 }}"#,
-                    grammar.definitions[*rule_no].name
+                    grammar.definitions[*rule_no].name, alt,
                 )
             }
             ast::Expression::Optional(expr) => {
                 format!(
-                    r#"{}.or_else(|_| Ok(Node::new(Rule::Terminal, pos, pos)))"#,
-                    self.emit_expr(expr, rule, grammar)
+                    r#"{}.or_else(|_| Ok(Node::new(Rule::Terminal, pos, pos, {})))"#,
+                    self.emit_expr(expr, rule, alt, grammar),
+                    alt,
                 )
             }
             ast::Expression::MustMatch(expr) => {
                 format!(
                     r#"{}.map(|mut node| {{ node.end = node.start; node }})"#,
-                    self.emit_expr(expr, rule, grammar)
+                    self.emit_expr(expr, rule, alt, grammar)
                 )
             }
             ast::Expression::MustNotMatch(expr) => {
                 format!(
                     r#"match {} {{
                     Ok(_) => Err(pos),
-                    Err(_) => Ok(Node::new(Rule::{}, pos, pos)),
+                    Err(_) => Ok(Node::new(Rule::{}, pos, pos, {})),
                 }}"#,
-                    self.emit_expr(expr, rule, grammar),
+                    self.emit_expr(expr, rule, "None", grammar),
                     rule,
+                    alt,
                 )
             }
             ast::Expression::Any(expr) => {
@@ -412,10 +442,12 @@ impl Generator {
                         start,
                         end: pos,
                         children: list,
+                        alternative: {},
                     }})
                 }}"#,
-                    self.emit_expr(expr, rule, grammar),
+                    self.emit_expr(expr, rule, "None", grammar),
                     rule,
+                    alt
                 )
             }
             ast::Expression::More(expr) => {
@@ -442,11 +474,13 @@ impl Generator {
                             start,
                             end: pos,
                             children: list,
+                            alternative: {},
                         }})
                     }}
                 }}"#,
-                    self.emit_expr(expr, rule, grammar),
+                    self.emit_expr(expr, rule, "None", grammar),
                     rule,
+                    alt,
                 )
             }
         }
@@ -466,40 +500,48 @@ pub struct Node {
     pub start: usize,
     pub end: usize,
     pub children: Vec<Node>,
+    pub alternative: Option<u16>
 }
 
 impl Node {
-    fn new(rule: Rule, start: usize, end: usize) -> Self {
+    fn new(rule: Rule, start: usize, end: usize, alternative: Option<u16>) -> Self {
         Self {
             rule,
             start,
             end,
             children: Vec::new(),
+            alternative,
         }
     }
 
     pub fn print_to_string(&self, input: &str) -> String {
-        if self.children.is_empty() {
-            format!(
-                "({:?}, \"{}\")",
-                self.rule,
-                escape_string(&input[self.start..self.end])
-            )
+        let children = if self.children.is_empty() {
+            String::new()
         } else {
-            let children = self
-                .children
-                .iter()
-                .map(|node| node.print_to_string(input))
-                .collect::<Vec<String>>()
-                .join(", ");
+            format!(", {}",
+                self
+                    .children
+                    .iter()
+                    .map(|node| node.print_to_string(input))
+                    .collect::<Vec<String>>()
+                    .join(", "))
+        };
 
-            format!(
-                "({:?}, \"{}\", {}))",
-                self.rule,
-                escape_string(&input[self.start..self.end]),
-                children
-            )
-        }
+        format!(
+            "({:?}, {}\"{}\"{})",
+            self.rule,
+            if let Some(alt) = self.alternative {
+                format!("alt={}, ", alt)
+            } else {
+                String::new()
+            },
+            escape_string(&input[self.start..self.end]),
+            children,
+        )
+    }
+
+    pub fn as_str<'s>(&self, input: &'s str) -> &'s str {
+        &input[self.start..self.end]
     }
 }
 
@@ -627,7 +669,7 @@ impl PEG {
             res.push_str(
                 r#"
 
-    fn builtin_whitespace(&self, pos: usize, input: &str) -> Result<Node, usize> {
+    fn builtin_whitespace(&self, pos: usize, input: &str, alt: Option<u16>) -> Result<Node, usize> {
         // TODO: is this worth caching?
         let mut chars = input[pos..].char_indices();
         let mut next_pos = pos;
@@ -640,7 +682,7 @@ impl PEG {
             }
         }
 
-        Ok(Node::new(Rule::WHITESPACE, pos, next_pos))
+        Ok(Node::new(Rule::WHITESPACE, pos, next_pos, alt))
     }"#,
             );
         }
@@ -649,10 +691,10 @@ impl PEG {
             res.push_str(
                 r#"
 
-    fn builtin_eoi(&self, pos: usize, input: &str) -> Result<Node, usize> {
+    fn builtin_eoi(&self, pos: usize, input: &str, alt: Option<u16>) -> Result<Node, usize> {
         // not worth caching
         if pos == input.len() {
-            Ok(Node::new(Rule::EOI, pos, pos))
+            Ok(Node::new(Rule::EOI, pos, pos, alt))
         } else {
             Err(pos)
         }
@@ -664,14 +706,14 @@ impl PEG {
             res.push_str(
                 r#"
 
-    fn builtin_dot(&self, pos: usize, input: &str) -> Result<Node, usize> {
+    fn builtin_dot(&self, pos: usize, input: &str, alt: Option<u16>) -> Result<Node, usize> {
         // not worth caching
         let mut chars = input[pos..].char_indices();
         if chars.next().is_some() {
             if let Some((len, _)) = chars.next() {
-                Ok(Node::new(Rule::Dot, pos, pos + len))
+                Ok(Node::new(Rule::Dot, pos, pos + len, alt))
             } else {
-                Ok(Node::new(Rule::Dot, pos, input.len()))
+                Ok(Node::new(Rule::Dot, pos, input.len(), alt))
             }
         } else {
             Err(pos)
@@ -684,16 +726,20 @@ impl PEG {
             res.push_str(
                 r#"
 
-    fn builtin_xid_identifier(&mut self, pos: usize, input: &str) -> Result<Node, usize> {
+    fn builtin_xid_identifier(&mut self, pos: usize, input: &str, alt: Option<u16>) -> Result<Node, usize> {
         let key = (pos, Rule::XID_IDENTIFIER);
 
         if let Some(res) = self.rule_memo.get(&key) {{
-            return res.clone();
+            let mut res = res.clone();
+            if let Ok(res) = &mut res {
+                res.alternative = alt;
+            }
+            return res;
         }}
 
         let mut chars = input[pos..].char_indices();
         let mut end = pos;
-        let res = if let Some((_, ch)) = chars.next() {
+        let mut res = if let Some((_, ch)) = chars.next() {
             if UnicodeXID::is_xid_start(ch) {
                 while {
                     if let Some((off, ch)) = chars.next() {
@@ -704,7 +750,7 @@ impl PEG {
                     }
                 } {}
 
-                Ok(Node::new(Rule::XID_IDENTIFIER, pos, end))
+                Ok(Node::new(Rule::XID_IDENTIFIER, pos, end, alt))
             } else {
                 Err(pos)
             }
@@ -714,6 +760,10 @@ impl PEG {
 
         self.rule_memo.insert(key, res.clone());
 
+        if let Ok(res) = &mut res {
+            res.alternative = alt;
+        }
+
         res
     }"#,
             );
@@ -722,12 +772,12 @@ impl PEG {
         res.push_str(
             r#"
 
-    fn match_terminal(&mut self, pos: usize, input: &str, terminal: Terminal) -> Option<Node> {
+    fn match_terminal(&mut self, pos: usize, input: &str, terminal: Terminal, alt: Option<u16>) -> Option<Node> {
         let key = (pos, terminal);
         let start = pos;
 
         if let Some(res) = self.terminal_memo.get(&key) {
-            return res.map(|end | Node::new(Rule::Terminal, start, end))
+            return res.map(|end | Node::new(Rule::Terminal, start, end, alt))
         }
 
         let res = if pos > input.len() {
@@ -791,7 +841,7 @@ impl PEG {
         // Note that failure to match is also cached using None
         self.terminal_memo.insert(key, res);
 
-        res.map(|end| Node::new(Rule::Terminal, start, end))
+        res.map(|end| Node::new(Rule::Terminal, start, end, alt))
     }
 }
 "#,
