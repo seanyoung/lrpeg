@@ -179,7 +179,7 @@ impl Generator {
             def.name, def.name,
         );
 
-        res.push_str(&self.emit_expr(&def.sequence, &def.name, "None", grammar));
+        res.push_str(&self.emit_expr(&def.sequence, Some(&def.name), "None", grammar));
 
         res.push_str(
             r#";
@@ -242,7 +242,7 @@ impl Generator {
 
             res.push_str(&self.emit_expr(
                 &ast::Expression::Alternatives(list),
-                &def.name,
+                Some(&def.name),
                 "None",
                 grammar,
             ));
@@ -256,7 +256,7 @@ impl Generator {
         loop {
             let r = "#,
             );
-            res.push_str(&self.emit_expr(&def.sequence, &def.name, "None", grammar));
+            res.push_str(&self.emit_expr(&def.sequence, Some(&def.name), "None", grammar));
         }
 
         res.push_str(
@@ -284,7 +284,7 @@ impl Generator {
     fn emit_expr(
         &self,
         expr: &ast::Expression,
-        rule: &str,
+        rule: Option<&str>,
         alt: &str,
         grammar: &ast::Grammar,
     ) -> String {
@@ -300,7 +300,7 @@ impl Generator {
             let start = pos;
 
             {}"#,
-                    self.emit_expr(first, "Terminal", "None", grammar)
+                    self.emit_expr(first, None, "None", grammar)
                 );
 
                 for expr in iter {
@@ -311,7 +311,7 @@ impl Generator {
                 list.push(node);
                 {}
             }})"#,
-                        self.emit_expr(expr, "Terminal", "None", grammar),
+                        self.emit_expr(expr, None, "None", grammar),
                     ));
                 }
 
@@ -330,7 +330,8 @@ impl Generator {
                 }}
             }})
         }}"#,
-                    rule, alt,
+                    rule.unwrap_or("Terminal"),
+                    alt,
                 ));
 
                 res
@@ -369,8 +370,9 @@ impl Generator {
                 res
             }
             ast::Expression::Definition(rule_no) => {
-                format!(
-                    r#"self.rule_{}(pos, input)
+                if let Some(rule) = rule {
+                    format!(
+                        r#"self.rule_{}(pos, input)
                         .map(|node| {{ Node {{
                             rule: Rule::{},
                             start: node.start,
@@ -379,8 +381,14 @@ impl Generator {
                             alternative: {},
                         }}
                     }})"#,
-                    grammar.definitions[*rule_no].name, rule, alt,
-                )
+                        grammar.definitions[*rule_no].name, rule, alt
+                    )
+                } else {
+                    format!(
+                        r#"self.rule_{}(pos, input)"#,
+                        grammar.definitions[*rule_no].name
+                    )
+                }
             }
             ast::Expression::MemoDefinition(rule_no) => {
                 format!(
@@ -417,7 +425,7 @@ impl Generator {
                     Err(_) => Ok(Node::new(Rule::{}, pos, pos, {})),
                 }}"#,
                     self.emit_expr(expr, rule, "None", grammar),
-                    rule,
+                    rule.unwrap_or("Terminal"),
                     alt,
                 )
             }
@@ -446,7 +454,7 @@ impl Generator {
                     }})
                 }}"#,
                     self.emit_expr(expr, rule, "None", grammar),
-                    rule,
+                    rule.unwrap_or("Terminal"),
                     alt
                 )
             }
@@ -479,7 +487,7 @@ impl Generator {
                     }}
                 }}"#,
                     self.emit_expr(expr, rule, "None", grammar),
-                    rule,
+                    rule.unwrap_or("Terminal"),
                     alt,
                 )
             }

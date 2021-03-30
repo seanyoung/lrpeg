@@ -43,7 +43,7 @@ fn test2() {
             .parse("carf erf")
             .unwrap()
             .print_to_string("carf erf"),
-        "(foo, alt=1, \"carf erf\", (carf, \"carf erf\", (Terminal, \"carf\"), (Dot, \" \"), (Terminal, \"erf\", (Terminal, \"erf\"))))"
+        "(foo, alt=1, \"carf erf\", (carf, \"carf erf\", (Terminal, \"carf\"), (Dot, \" \"), (Terminal, \"erf\")))"
     );
 
     assert!(p.parse("carf erf").is_ok());
@@ -84,17 +84,17 @@ fn calculator() {
     );
     assert_eq!(
         parse("1+1"),
-        "(expr, alt=2, \"1+1\", (term, alt=0, \"1+1\", (term, \"1\", (Terminal, \"1\")), (Terminal, \"+\"), (Terminal, \"1\", (term, alt=3, \"1\", (Terminal, \"1\")))))"
+        "(expr, alt=2, \"1+1\", (term, alt=0, \"1+1\", (term, \"1\", (Terminal, \"1\")), (Terminal, \"+\"), (term, alt=3, \"1\", (Terminal, \"1\"))))"
     );
     assert_eq!(
         parse("1*1"),
-        "(expr, alt=0, \"1*1\", (Terminal, \"1\", (term, alt=3, \"1\", (Terminal, \"1\"))), (Terminal, \"*\"), (Terminal, \"1\", (term, alt=3, \"1\", (Terminal, \"1\"))))"
+        "(expr, alt=0, \"1*1\", (term, alt=3, \"1\", (Terminal, \"1\")), (Terminal, \"*\"), (term, alt=3, \"1\", (Terminal, \"1\")))"
     );
     assert_eq!(
         parse("1*100"),
-        "(expr, alt=0, \"1*100\", (Terminal, \"1\", (term, alt=3, \"1\", (Terminal, \"1\"))), (Terminal, \"*\"), (Terminal, \"100\", (term, alt=3, \"100\", (Terminal, \"100\"))))"
+        "(expr, alt=0, \"1*100\", (term, alt=3, \"1\", (Terminal, \"1\")), (Terminal, \"*\"), (term, alt=3, \"100\", (Terminal, \"100\")))"
     );
-    assert_eq!(parse("(1+1)"), "(expr, alt=2, \"(1+1)\", (term, alt=2, \"(1+1)\", (Terminal, \"(\"), (Terminal, \"1+1\", (expr, alt=2, \"1+1\", (term, alt=0, \"1+1\", (term, \"1\", (Terminal, \"1\")), (Terminal, \"+\"), (Terminal, \"1\", (term, alt=3, \"1\", (Terminal, \"1\")))))), (Terminal, \")\")))");
+    assert_eq!(parse("(1+1)"), "(expr, alt=2, \"(1+1)\", (term, alt=2, \"(1+1)\", (Terminal, \"(\"), (expr, alt=2, \"1+1\", (term, alt=0, \"1+1\", (term, \"1\", (Terminal, \"1\")), (Terminal, \"+\"), (term, alt=3, \"1\", (Terminal, \"1\")))), (Terminal, \")\")))");
     assert_eq!(
         parse("1*(1+1"),
         "(expr, alt=2, \"1\", (term, alt=3, \"1\", (Terminal, \"1\")))"
