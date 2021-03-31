@@ -41,12 +41,12 @@ fn main() {
 Write your peg grammar, and put it in a file which ends with `.peg`, for example `src/calculator.peg`:
 
 ```
-expr <- term "*" term
-    / term "/" term
+expr <- expr "+" term
+    / expr "-" term
     / term;
 
-term <- term "+" term
-    / term "-" term
+term <- term "*" num
+    / term "/" num
     / "(" expr ")"
     / num;
 
@@ -61,7 +61,7 @@ mod calculator;
 fn main() {
    let mut parser = calculator::PEG::new();
 
-   match parser.parse("10 + (100 * 9)") {
+   match parser.parse("10 + 100 * 9") {
       Ok(s) => println!("parse tree: {}", s.print_to_string()),
       Err(pos) => println!("parse error at offset {}", pos);
    }

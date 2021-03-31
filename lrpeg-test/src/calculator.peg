@@ -1,9 +1,9 @@
-expr <- term "*" term
-    / term "/" term
+expr <- expr "+" term
+    / expr "-" term
     / term;
 
-term <- term "+" term
-    / term "-" term
+term <- term "*" num
+    / term "/" num
     / "(" expr ")"
     / num;
 
