@@ -17,7 +17,7 @@ pub struct Definition {
 pub enum Expression {
     Dot,
     Whitespace,
-    EOI,
+    Eoi,
     XidIdentifier, // unicode identifier
     Definition(usize),
     MemoDefinition(usize),
