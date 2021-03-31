@@ -1,1 +1,1 @@
-foo <- "barf" EOI;
+foo <- "barf" WHITESPACE EOI;

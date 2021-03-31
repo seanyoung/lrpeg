@@ -752,12 +752,17 @@ impl PEG {
     fn builtin_whitespace(&self, pos: usize, input: &str, alt: Option<u16>) -> Result<Node, usize> {
         // TODO: is this worth caching?
         let mut chars = input[pos..].char_indices();
-        let mut next_pos = pos;
+        let mut next_pos;
 
-        while let Some((off, ch)) = chars.next() {
-            next_pos = pos + off;
+        loop {
+            if let Some((off, ch)) = chars.next() {
+                next_pos = pos + off;
 
-            if !ch.is_whitespace() {
+                if !ch.is_whitespace() {
+                    break;
+                }
+            } else {
+                next_pos = input.len();
                 break;
             }
         }

@@ -20,6 +20,7 @@ fn test1() {
     let mut p = test1::PEG::new();
 
     assert!(p.parse("barf").is_ok());
+    assert!(p.parse("barf\n\r \t").is_ok());
     assert!(p.parse("berf").is_err());
 }
 
