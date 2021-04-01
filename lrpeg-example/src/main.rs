@@ -1,3 +1,4 @@
+#[rustfmt::skip]
 mod calculator;
 
 use calculator::{Node, Rule};
