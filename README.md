@@ -15,7 +15,7 @@ a PEG parser generator which allows for
 [left recursion](http://www.vpri.org/pdf/tr2007002_packrat.pdf),
 just as [python now uses](https://medium.com/@gvanrossum_83706/left-recursive-peg-grammars-65dab3c580e1).
 
-See [IRP Grammar](https://github.com/seanyoung/lrpeg/blob/main/lrpeg-test/src/irp.peg) for a complete lrpeg grammar for
+See [IRP Grammar](https://github.com/seanyoung/ir-ctl/blob/main/src/irp/) for a complete lrpeg grammar and handling for
 [IRP](http://hifi-remote.com/wiki/index.php?title=IRP_Notation).
 
 ## How to use lrpeg
