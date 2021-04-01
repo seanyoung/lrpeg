@@ -1,0 +1,12 @@
+[package]
+name = "lrpeg-example"
+version = "0.1.0"
+authors = ["Sean Young <sean@mess.org>"]
+edition = "2018"
+
+[build-dependencies.lrpeg]
+path = "../lrpeg"
+
+[dependencies]
+regex = "1"
+unicode-xid = "0.2"
