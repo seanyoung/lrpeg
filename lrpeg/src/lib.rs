@@ -121,7 +121,7 @@ impl Generator {
                 self.builtins
                     .insert(expr.clone(), String::from("WHITESPACE"));
             }
-            ast::Expression::Eoi => {
+            ast::Expression::EndOfInput => {
                 self.builtins.insert(expr.clone(), String::from("EOI"));
             }
             ast::Expression::XidIdentifier => {
@@ -354,7 +354,7 @@ impl Generator {
                     format!(r#"self.builtin_whitespace(pos, input, {})"#, alt)
                 }
             }
-            ast::Expression::Eoi => {
+            ast::Expression::EndOfInput => {
                 if let Some(rule) = rule {
                     format!(
                         r#"self.builtin_eoi(pos, input, None)
@@ -772,7 +772,7 @@ impl PEG {
             );
         }
 
-        if self.builtins.contains_key(&ast::Expression::Eoi) {
+        if self.builtins.contains_key(&ast::Expression::EndOfInput) {
             res.push_str(
                 r#"
 
