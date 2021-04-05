@@ -1,0 +1,4 @@
+lang <- lines* EOI;
+lines <- indent keyword? ("\n" / EOI);
+indent <- (" " / "\t")*;
+keyword <- ("a" / "b" / "c");

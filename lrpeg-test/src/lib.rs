@@ -14,6 +14,8 @@ mod repeat;
 mod test1;
 #[rustfmt::skip]
 mod test2;
+#[rustfmt::skip]
+mod lang;
 
 #[test]
 fn test1() {
@@ -161,4 +163,53 @@ fn irp() {
 
     parse("{37k,432}<1,-1|1,-3>(8,-4,67:8,83:8,X:4,D:4,S:8,F:8,T:8,1,-100,(8,-8,1,-100)*) {T=D+S:4:0+S:4:4+F:4:0+F:4:4} [D:0..15,S:0..255,F:0..255,X:0..15=1]");
     parse("{40k,520,msb}<1,-10|1,-1,1,-8>(S:1,<1:2|2:2>(F:D),-90m)*{D=7}[S:0..1,F:0..255]");
+}
+
+fn parse_lang(input: &str) -> Vec<usize> {
+    let mut parser = lang::PEG::new();
+    let mut res = Vec::new();
+
+    match parser.parse(input) {
+        Ok(node) => {
+            for line_node in collect_rules(&node.children[0], lang::Rule::lines) {
+                // do we have a keyword
+                if !line_node.children[1].is_empty() {
+                    let s = line_node.children[0].as_str(input).replace("\t", "    ");
+                    res.push(s.len());
+                }
+            }
+        }
+        Err(pos) => panic!("parse error at {}", pos),
+    }
+
+    res
+}
+
+fn collect_rules(node: &lang::Node, rule: lang::Rule) -> Vec<&lang::Node> {
+    let mut list = Vec::new();
+
+    fn recurse<'t>(node: &'t lang::Node, rule: lang::Rule, list: &mut Vec<&'t lang::Node>) {
+        if node.rule == rule {
+            list.push(node);
+        } else {
+            for node in &node.children {
+                recurse(node, rule, list);
+            }
+        }
+    }
+
+    recurse(node, rule, &mut list);
+
+    list
+}
+
+#[test]
+fn lang1() {
+    let res = parse_lang(
+        r#"
+    c
+  b
+ a"#,
+    );
+    assert_eq!(res, vec![4, 2, 1]);
 }
