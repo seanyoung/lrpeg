@@ -206,7 +206,13 @@ impl Generator {
     #[allow(non_snake_case)]
     fn rule_{}(&mut self, pos: usize, input: &str) -> Result<Node, usize> {{
         let key = (pos, Rule::{});
-"#,
+
+        if let Some(res) = self.rule_memo.get(&key) {{
+            return res.clone();
+        }}
+
+        self.rule_memo.insert(key, Err(pos));
+    "#,
             def.name, def.name,
         );
 
@@ -214,7 +220,6 @@ impl Generator {
         if let ast::Expression::Alternatives(list) = &def.sequence {
             res.push_str(
                 r#"
-        self.rule_memo.entry(key).or_insert(Err(pos));
 
         let mut res = Err(pos);
         let mut next_pos = pos;
@@ -273,6 +278,8 @@ impl Generator {
 
             break;
         }
+
+        self.rule_memo.insert(key, res.clone());
 
         res
     }"#,
