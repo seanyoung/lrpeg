@@ -1,6 +1,6 @@
 [package]
 name = "lrpeg"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Sean Young <sean@mess.org>"]
 description = "Left recursive PEG parser generator"
 repository = "https://github.com/seanyoung/lrpeg"
