@@ -1,5 +1,5 @@
 
-![crates.io](https://img.shields.io/crates/v/lrpeg.svg)
+[![crates.io](https://img.shields.io/crates/v/lrpeg.svg)](https://crates.io/crates/lrpeg)
 [![CI](https://github.com/seanyoung/lrpeg/workflows/test/badge.svg)](https://github.com/seanyoung/lrpeg/actions)
 [![license](https://img.shields.io/github/license/seanyoung/lrpeg.svg)](LICENSE)
 
