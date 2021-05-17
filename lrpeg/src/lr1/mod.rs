@@ -2,8 +2,9 @@ use crate::ast;
 use std::collections::HashMap;
 
 #[allow(clippy::all)]
-#[cfg_attr(rustfmt, rustfmt_skip)]
-mod peg;
+mod peg {
+    include!(concat!(env!("OUT_DIR"), "/lr1/peg.rs"));
+}
 
 #[derive(Debug)]
 pub struct Definition {
