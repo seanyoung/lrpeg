@@ -31,7 +31,7 @@ impl Generator {
         }
     }
 
-    pub fn build(&mut self, grammar: &ast::Grammar) -> String {
+    pub fn build(&mut self, grammar: &ast::Grammar, modname: &str) -> String {
         // prepopulate builtins
         self.symbols.insert(String::from("Dot"));
         self.symbols.insert(String::from("WHITESPACE"));
@@ -47,7 +47,7 @@ impl Generator {
             self.collect_terminals_recursive(&rule.sequence);
         }
 
-        self.emit(&grammar)
+        self.emit(&grammar, modname)
     }
 
     fn terminal_to_identifier(&mut self, s: &str, default: &str) -> String {
@@ -569,8 +569,9 @@ impl Generator {
         }
     }
 
-    fn emit(&self, grammar: &ast::Grammar) -> String {
-        let mut res = String::from(
+    fn emit(&self, grammar: &ast::Grammar, modname: &str) -> String {
+        let mut res = format!("mod {} {{", modname);
+        res.push_str(
             r#"
 #![allow(unused_imports, dead_code, clippy::all)]
 use std::collections::HashMap;
@@ -935,6 +936,7 @@ impl PEG {
         res
     }
 }
+}
 "#,
         );
 
@@ -942,12 +944,12 @@ impl PEG {
     }
 }
 
-pub fn process_files(dir: &Path) {
+pub fn process_files(dir: &Path, out: &Path) {
     for entry in fs::read_dir(dir).expect("cannot read directory") {
         let entry = entry.expect("cannot read file");
         let path = entry.path();
         if path.is_dir() {
-            process_files(&path);
+            process_files(&path, out);
         } else if path.is_file() && path.extension() == Some(OsStr::new("peg")) {
             let src = fs::read_to_string(&path).expect("failed to read input");
 
@@ -955,9 +957,9 @@ pub fn process_files(dir: &Path) {
 
             let mut gen = Generator::new();
 
-            let res = gen.build(&grammar);
+            let res = gen.build(&grammar, path.file_stem().unwrap().to_str().unwrap());
 
-            let new_path = path.with_extension("rs");
+            let new_path = out.join(path.with_extension("rs").file_name().unwrap());
 
             fs::write(new_path, res).expect("failed to write result")
         }

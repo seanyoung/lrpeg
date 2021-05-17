@@ -1,5 +1,4 @@
-#[rustfmt::skip]
-mod calculator;
+include!(concat!(env!("OUT_DIR"), "/calculator.rs"));
 
 use calculator::{Node, Rule};
 
@@ -21,7 +20,7 @@ fn main() {
         Ok(node) => {
             fn walk(node: &Node, input: &str) -> u64 {
                 match node.rule {
-                    Rule::num => u64::from_str_radix(node.children[0].as_str(input), 10).unwrap(),
+                    Rule::num => str::parse(node.children[0].as_str(input)).unwrap(),
                     Rule::expr => {
                         if node.alternative == Some(0) {
                             let left = walk(&node.children[0], input);

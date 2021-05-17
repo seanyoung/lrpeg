@@ -34,10 +34,12 @@ unicode-xid = "0.2"
 Now add a `build.rs` to the root of your project, containing:
 
 ```
+use std::env;
 use std::path::PathBuf;
 
 fn main() {
-    lrpeg::process_files(&PathBuf::from("src"));
+    let out_dir = env::var("OUT_DIR").unwrap();
+    lrpeg::process_files(&PathBuf::from("src"), &PathBuf::from(out_dir));
 }
 ```
 Write your peg grammar, and put it in a file which ends with `.peg`, for example
@@ -57,11 +59,11 @@ factor <- "(" WHITESPACE  expr ")" WHITESPACE
 
 num <- r"[0-9]+" WHITESPACE;
 ```
-When your run `cargo build`, `src/calculator.rs` will be generated. You need to include this module in
-your project, and then you can instantiate the PEG like so:
+When your run `cargo build`, `calculator.rs` will be generated into your `target/...` directory. You need
+to include this module in your project, and then you can instantiate the PEG like so:
 
 ``` rust
-mod calculator;
+include!(concat!(env!("OUT_DIR"), "/calculator.rs"));
 
 use calculator::{Node, Rule};
 

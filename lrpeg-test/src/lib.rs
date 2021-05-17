@@ -1,21 +1,13 @@
 #![cfg_attr(not(test), allow(dead_code, unused_imports))]
 
-#[rustfmt::skip]
-mod calculator;
-#[rustfmt::skip]
-mod direct_left_recursive;
-#[rustfmt::skip]
-mod indirect_left_recursive;
-#[rustfmt::skip]
-mod irp;
-#[rustfmt::skip]
-mod repeat;
-#[rustfmt::skip]
-mod test1;
-#[rustfmt::skip]
-mod test2;
-#[rustfmt::skip]
-mod lang;
+include!(concat!(env!("OUT_DIR"), "/calculator.rs"));
+include!(concat!(env!("OUT_DIR"), "/direct_left_recursive.rs"));
+include!(concat!(env!("OUT_DIR"), "/indirect_left_recursive.rs"));
+include!(concat!(env!("OUT_DIR"), "/irp.rs"));
+include!(concat!(env!("OUT_DIR"), "/repeat.rs"));
+include!(concat!(env!("OUT_DIR"), "/test1.rs"));
+include!(concat!(env!("OUT_DIR"), "/test2.rs"));
+include!(concat!(env!("OUT_DIR"), "/lang.rs"));
 
 #[test]
 fn test1() {
