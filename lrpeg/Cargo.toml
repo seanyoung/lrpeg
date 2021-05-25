@@ -11,9 +11,6 @@ readme = "../README.md"
 license = "MIT"
 workspace = ".."
 
-[build-dependencies]
-lalrpop = "0.19"
-
 [dependencies]
-lalrpop-util = "0.19"
 unicode-xid = "0.2"
+regex = "1"

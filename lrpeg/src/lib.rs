@@ -6,7 +6,7 @@ use unicode_xid::UnicodeXID;
 
 mod ast;
 mod check;
-pub mod lr1;
+pub mod parser;
 mod utils;
 
 use utils::{escape_char, escape_string};
@@ -956,7 +956,7 @@ pub fn process_files(dir: &Path, out: &Path) {
         } else if path.is_file() && path.extension() == Some(OsStr::new("peg")) {
             let src = fs::read_to_string(&path).expect("failed to read input");
 
-            let grammar = lr1::parse(&src);
+            let grammar = parser::parse(&src);
 
             let mut gen = Generator::new();
 

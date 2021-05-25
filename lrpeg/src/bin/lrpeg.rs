@@ -1,4 +1,4 @@
-use lrpeg::{lr1, Generator};
+use lrpeg::{parser, Generator};
 use std::path::PathBuf;
 use std::{env, fs};
 
@@ -11,7 +11,7 @@ fn main() {
 
     let src = fs::read_to_string(&filename).expect("failed to read input");
 
-    let grammar = lr1::parse(&src);
+    let grammar = parser::parse(&src);
 
     let mut gen = Generator::new();
 
