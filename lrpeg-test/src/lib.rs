@@ -1,5 +1,8 @@
 #![cfg_attr(not(test), allow(dead_code, unused_imports))]
 
+use std::env;
+use std::path::PathBuf;
+
 include!(concat!(env!("OUT_DIR"), "/calculator.rs"));
 include!(concat!(env!("OUT_DIR"), "/direct_left_recursive.rs"));
 include!(concat!(env!("OUT_DIR"), "/indirect_left_recursive.rs"));
@@ -204,4 +207,11 @@ fn lang1() {
  a"#,
     );
     assert_eq!(res, vec![4, 2, 1]);
+}
+
+#[test]
+#[should_panic(expected = "1 errors found")]
+fn broken() {
+    let out_dir = env::var("OUT_DIR").unwrap();
+    lrpeg::process_files(&PathBuf::from("."), &PathBuf::from(out_dir));
 }

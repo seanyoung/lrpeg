@@ -5,6 +5,7 @@ use std::path::Path;
 use unicode_xid::UnicodeXID;
 
 mod ast;
+mod check;
 pub mod lr1;
 mod utils;
 
@@ -32,6 +33,8 @@ impl Generator {
     }
 
     pub fn build(&mut self, grammar: &ast::Grammar, modname: &str) -> String {
+        check::check_grammar(grammar);
+
         // prepopulate builtins
         self.symbols.insert(String::from("Dot"));
         self.symbols.insert(String::from("WHITESPACE"));
