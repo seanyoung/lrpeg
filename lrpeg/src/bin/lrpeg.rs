@@ -1,4 +1,4 @@
-use lrpeg::{parser, Generator};
+use lrpeg::build_parser;
 use std::path::PathBuf;
 use std::{env, fs};
 
@@ -11,14 +11,10 @@ fn main() {
 
     let src = fs::read_to_string(&filename).expect("failed to read input");
 
-    let grammar = parser::parse(&src);
-
-    let mut gen = Generator::new();
-
     let path = PathBuf::from(filename);
 
     println!(
         "{}",
-        gen.build(&grammar, path.file_stem().unwrap().to_str().unwrap())
+        build_parser(&src, path.file_stem().unwrap().to_str().unwrap())
     );
 }

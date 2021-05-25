@@ -6,12 +6,20 @@ use unicode_xid::UnicodeXID;
 
 mod ast;
 mod check;
-pub mod parser;
+mod parser;
 mod utils;
 
 use utils::{escape_char, escape_string};
 
-pub struct Generator {
+/// Generate a parser module for the peg described in source. The result is
+/// a rust module as String.
+pub fn build_parser(source: &str, modname: &str) -> String {
+    let mut gen = Generator::new();
+
+    gen.build(source, modname)
+}
+
+struct Generator {
     symbols: HashSet<String>,
     builtins: HashMap<ast::Expression, String>,
     terminals: HashMap<ast::Expression, String>,
@@ -24,7 +32,7 @@ impl Default for Generator {
 }
 
 impl Generator {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Generator {
             symbols: HashSet::new(),
             builtins: HashMap::new(),
@@ -32,8 +40,10 @@ impl Generator {
         }
     }
 
-    pub fn build(&mut self, grammar: &ast::Grammar, modname: &str) -> String {
-        check::check_grammar(grammar);
+    fn build(&mut self, source: &str, modname: &str) -> String {
+        let grammar = parser::parse(&source);
+
+        check::check_grammar(&grammar);
 
         // prepopulate builtins
         self.symbols.insert(String::from("Dot"));
@@ -947,6 +957,10 @@ impl PEG {
     }
 }
 
+/// This function is supposed to called from a crate build.rs. You pass in the
+/// directory where your .peg files reside ("src/" for example), and for each of
+/// those, an .rs file with the generated parser will be created in the out
+/// directory. You generally want this to be in cargo's OUT_DIR.
 pub fn process_files(dir: &Path, out: &Path) {
     for entry in fs::read_dir(dir).expect("cannot read directory") {
         let entry = entry.expect("cannot read file");
@@ -956,15 +970,13 @@ pub fn process_files(dir: &Path, out: &Path) {
         } else if path.is_file() && path.extension() == Some(OsStr::new("peg")) {
             let src = fs::read_to_string(&path).expect("failed to read input");
 
-            let grammar = parser::parse(&src);
-
             let mut gen = Generator::new();
 
-            let res = gen.build(&grammar, path.file_stem().unwrap().to_str().unwrap());
+            let res = gen.build(&src, path.file_stem().unwrap().to_str().unwrap());
 
             let new_path = out.join(path.with_extension("rs").file_name().unwrap());
 
-            fs::write(new_path, res).expect("failed to write result")
+            fs::write(new_path, res).expect("failed to write generated parser")
         }
     }
 }
