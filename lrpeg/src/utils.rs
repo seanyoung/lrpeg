@@ -10,7 +10,7 @@ pub fn escape_char(ch: char) -> String {
 }
 
 pub fn escape_string(str: &str) -> String {
-    let mut res = String::from("\"");
+    let mut res = String::new();
 
     for ch in str.chars() {
         match ch {
@@ -22,8 +22,6 @@ pub fn escape_string(str: &str) -> String {
             ch => res.push(ch),
         }
     }
-
-    res.push('"');
 
     res
 }

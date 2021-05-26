@@ -224,8 +224,7 @@ impl Generator {
             return res.clone();
         }}
 
-        self.rule_memo.insert(key, Err(pos));
-    "#,
+        self.rule_memo.insert(key, Err(pos));"#,
             def.name, def.name,
         );
 
@@ -722,8 +721,8 @@ impl PEG {
                 }
 
                 res.push_str(&format!(
-                    r##"
-            regex_{}: Regex::new(r#"^{}"#).unwrap(),"##,
+                    r################"
+            regex_{}: Regex::new(r########"^{}"########).unwrap(),"################,
                     name, r,
                 ));
             }
@@ -893,7 +892,7 @@ impl PEG {
                         r#"
                 Terminal::{} => {{
                     if input[pos..].starts_with({}) {{
-                        Some(pos + {}.len())
+                        Some(pos + "{}".len())
                     }} else {{
                         None
                     }}
@@ -908,8 +907,8 @@ impl PEG {
                     res.push_str(&format!(
                         r#"
                 Terminal::{} => {{
-                    if input[pos..].starts_with({}) {{
-                        Some(pos + {}.len())
+                    if input[pos..].starts_with("{}") {{
+                        Some(pos + "{}".len())
                     }} else {{
                         None
                     }}

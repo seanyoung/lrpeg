@@ -19,9 +19,9 @@ primary <- "&" ws primary
         / string_literal ws
         / "." ws;
 
-string_literal <- r"\"([^\"\\]|\\.)*\""
-        /  r"'([^'\\]|\\.)*'";
+string_literal <- re#"([^"\\]|\\.)*"#
+        /  re#'([^'\\]|\\.)*'#;
 
-regex <- r"r\"([^\"\\]|\\.)*\"";
+regex <- re#re\#([^\#\\]|\\.)*\##;
 
 ws <- WHITESPACE;

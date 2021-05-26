@@ -79,20 +79,20 @@ fn escape_string(str: &str) -> String {
 #[derive(Clone, Copy, Hash, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 enum Terminal {
+    Literal_3,
+    Literal_1,
+    Literal_9,
+    Regex,
+    re,
+    Literal_0,
+    Literal_7,
     Literal_5,
     Literal,
-    Literal_6,
-    Literal_7,
-    Literal_1,
-    Literal_8,
-    Regex,
-    Literal_2,
-    r,
-    Regex_0,
     Literal_4,
-    Literal_3,
-    Literal_9,
-    Literal_0,
+    Literal_8,
+    Regex_0,
+    Literal_6,
+    Literal_2,
 }
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
@@ -108,9 +108,9 @@ pub enum Rule {
     string_literal,
     regex,
     ws,
-    XID_IDENTIFIER,
-    EOI,
     WHITESPACE,
+    EOI,
+    XID_IDENTIFIER,
 }
 
 #[allow(non_snake_case)]
@@ -118,7 +118,7 @@ pub struct PEG {
     terminal_memo: HashMap<(usize, Terminal), Option<usize>>,
     rule_memo: HashMap<(usize, Rule), Result<Node, usize>>,
     regex_Regex: Regex,
-    regex_r: Regex,
+    regex_re: Regex,
     regex_Regex_0: Regex,
 }
 
@@ -127,9 +127,9 @@ impl PEG {
         Self {
             terminal_memo: HashMap::new(),
             rule_memo: HashMap::new(),
-            regex_Regex_0: Regex::new(r#"^'([^'\\]|\\.)*'"#).unwrap(),
-            regex_Regex: Regex::new(r#"^"([^"\\]|\\.)*""#).unwrap(),
-            regex_r: Regex::new(r#"^r"([^"\\]|\\.)*""#).unwrap(),
+            regex_Regex: Regex::new(r########"^"([^"\\]|\\.)*""########).unwrap(),
+            regex_re: Regex::new(r########"^re#([^#\\]|\\.)*#"########).unwrap(),
+            regex_Regex_0: Regex::new(r########"^'([^'\\]|\\.)*'"########).unwrap(),
         }
     }
 
@@ -422,7 +422,6 @@ impl PEG {
 
         self.rule_memo.insert(key, Err(pos));
 
-
         let mut res = Err(pos);
         let mut next_pos = pos;
 
@@ -432,9 +431,7 @@ impl PEG {
             let start = pos;
 
             match self.rule_memo.get(&(pos, Rule::alternative)) {
-                    Some(e) => {
-                        e.clone()
-                    },
+                    Some(e) => e.clone(),
                     None => Err(pos),
                 }
             .and_then(|node| {
@@ -467,9 +464,7 @@ impl PEG {
             let start = pos;
 
             match self.rule_memo.get(&(pos, Rule::alternative)) {
-                    Some(e) => {
-                        e.clone()
-                    },
+                    Some(e) => e.clone(),
                     None => Err(pos),
                 }
             .and_then(|node| {
@@ -502,9 +497,7 @@ impl PEG {
             let start = pos;
 
             match self.rule_memo.get(&(pos, Rule::alternative)) {
-                    Some(e) => {
-                        e.clone()
-                    },
+                    Some(e) => e.clone(),
                     None => Err(pos),
                 }
             .and_then(|node| {
@@ -813,7 +806,7 @@ impl PEG {
             return res.clone();
         }
 
-        let res = self.match_terminal(pos, input, Terminal::r)
+        let res = self.match_terminal(pos, input, Terminal::re)
                     .map(|end| Node::new(Rule::regex, pos, end, None))
                     .ok_or(pos);
 
@@ -929,6 +922,51 @@ impl PEG {
             None
         } else {
             match terminal {
+                Terminal::Literal_3 => {
+                    if input[pos..].starts_with('*') {
+                        Some(pos + "*".len())
+                    } else {
+                        None
+                    }
+                }
+                Terminal::Literal_1 => {
+                    if input[pos..].starts_with('/') {
+                        Some(pos + "/".len())
+                    } else {
+                        None
+                    }
+                }
+                Terminal::Literal_9 => {
+                    if input[pos..].starts_with('.') {
+                        Some(pos + ".".len())
+                    } else {
+                        None
+                    }
+                }
+                Terminal::Regex => {
+                    self.regex_Regex.find(&input[pos..]).map(|m| {
+                        m.end() + pos
+                    })
+                }
+                Terminal::re => {
+                    self.regex_re.find(&input[pos..]).map(|m| {
+                        m.end() + pos
+                    })
+                }
+                Terminal::Literal_0 => {
+                    if input[pos..].starts_with(';') {
+                        Some(pos + ";".len())
+                    } else {
+                        None
+                    }
+                }
+                Terminal::Literal_7 => {
+                    if input[pos..].starts_with('&') {
+                        Some(pos + "&".len())
+                    } else {
+                        None
+                    }
+                }
                 Terminal::Literal_5 => {
                     if input[pos..].starts_with('(') {
                         Some(pos + "(".len())
@@ -943,23 +981,9 @@ impl PEG {
                         None
                     }
                 }
-                Terminal::Literal_6 => {
-                    if input[pos..].starts_with(')') {
-                        Some(pos + ")".len())
-                    } else {
-                        None
-                    }
-                }
-                Terminal::Literal_7 => {
-                    if input[pos..].starts_with('&') {
-                        Some(pos + "&".len())
-                    } else {
-                        None
-                    }
-                }
-                Terminal::Literal_1 => {
-                    if input[pos..].starts_with('/') {
-                        Some(pos + "/".len())
+                Terminal::Literal_4 => {
+                    if input[pos..].starts_with('+') {
+                        Some(pos + "+".len())
                     } else {
                         None
                     }
@@ -971,52 +995,21 @@ impl PEG {
                         None
                     }
                 }
-                Terminal::Regex => {
-                    self.regex_Regex.find(&input[pos..]).map(|m| {
-                        m.end() + pos
-                    })
-                }
-                Terminal::Literal_2 => {
-                    if input[pos..].starts_with('?') {
-                        Some(pos + "?".len())
-                    } else {
-                        None
-                    }
-                }
-                Terminal::r => {
-                    self.regex_r.find(&input[pos..]).map(|m| {
-                        m.end() + pos
-                    })
-                }
                 Terminal::Regex_0 => {
                     self.regex_Regex_0.find(&input[pos..]).map(|m| {
                         m.end() + pos
                     })
                 }
-                Terminal::Literal_4 => {
-                    if input[pos..].starts_with('+') {
-                        Some(pos + "+".len())
+                Terminal::Literal_6 => {
+                    if input[pos..].starts_with(')') {
+                        Some(pos + ")".len())
                     } else {
                         None
                     }
                 }
-                Terminal::Literal_3 => {
-                    if input[pos..].starts_with('*') {
-                        Some(pos + "*".len())
-                    } else {
-                        None
-                    }
-                }
-                Terminal::Literal_9 => {
-                    if input[pos..].starts_with('.') {
-                        Some(pos + ".".len())
-                    } else {
-                        None
-                    }
-                }
-                Terminal::Literal_0 => {
-                    if input[pos..].starts_with(';') {
-                        Some(pos + ";".len())
+                Terminal::Literal_2 => {
+                    if input[pos..].starts_with('?') {
+                        Some(pos + "?".len())
                     } else {
                         None
                     }

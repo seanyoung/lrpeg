@@ -10,8 +10,8 @@ general_item <- "msb" WHITESPACE
     / number_decimals WHITESPACE "%" WHITESPACE
     / number_decimals WHITESPACE;
 
-number_decimals <- r"\\d+\\.\\d+"
-    / r"\\d+";
+number_decimals <- re#\d+\\.\d+#
+    / re#\d+#;
 
 definitions <- '{' definition ("," WHITESPACE definition)* '}' WHITESPACE;
 
@@ -51,9 +51,9 @@ parameter_specs <- "[" WHITESPACE parameter_spec ("," WHITESPACE parameter_spec)
 
 parameter_spec <- XID_IDENTIFIER WHITESPACE "@"? WHITESPACE ":" WHITESPACE number WHITESPACE ".." WHITESPACE number WHITESPACE ('=' expression)? WHITESPACE;
 
-number <- r"0x[0-9a-fA-F]+"
-    / r"0b[01]+"
-    / r"\\d+"
+number <- re#0x[0-9a-fA-F]+#
+    / re#0b[01]+#
+    / re#\d+#
     / "UINT8_MAX"
     / "UINT16_MAX"
     / "UINT32_MAX"

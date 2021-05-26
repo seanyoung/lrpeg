@@ -57,7 +57,7 @@ term <- term ("*" / "/" / "%") WHITESPACE  factor
 factor <- "(" WHITESPACE  expr ")" WHITESPACE
     / num;
 
-num <- r"[0-9]+" WHITESPACE;
+num <- re#[0-9]+# WHITESPACE;
 ```
 When your run `cargo build`, `calculator.rs` will be generated into your `target/...` directory. You need
 to include this module in your project, and then you can instantiate the PEG like so:
@@ -147,7 +147,7 @@ PEG grammars are a set of rules. In lrpeg, each rule must end with a ";". Parsin
 - A term can be repeated with `*`, `+` or optional `?`.
 - The list of terms cannot be empty (but a term can be optional)
 - A text literal can be encoded in single or double quotes ("foo" or 'bar')
-- A regex must be written as `r"[0-9]+"`. Backslashed must be escaped `r"\\d+"` (this really needs fixing)
+- A regex must be written as `re#[0-9]+#`.
 - Alternatives are denoted with `/`. For example `foo <- "a" / "b";`
 - There are special terms `WHITESPACE`, `EOI`, and `XID_IDENTIFIER` (for unicode identifiers)
 

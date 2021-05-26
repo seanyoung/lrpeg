@@ -9,4 +9,4 @@ term <- term ("*" / "/" / "%") WHITESPACE  factor
 factor <- "(" WHITESPACE  expr ")" WHITESPACE
     / num;
 
-num <- r"[0-9]+" WHITESPACE;
+num <- re#[0-9]+# WHITESPACE;

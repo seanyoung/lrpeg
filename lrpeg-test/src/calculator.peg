@@ -7,4 +7,4 @@ term <- term "*" num
     / "(" expr ")"
     / num;
 
-num <- r"[0-9]+";
+num <- re#[0-9]+#;

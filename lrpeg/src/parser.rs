@@ -107,7 +107,7 @@ fn collect_primary(node: &peg::Node, grammar: &ast::Grammar, src: &str) -> ast::
             grammar,
             src,
         ))),
-        Some(2) => ast::Expression::Regex(unquote(&node.children[0].as_str(src)[1..])),
+        Some(2) => ast::Expression::Regex(unquote(&node.children[0].as_str(src)[2..])),
         Some(3) => match node.children[0].as_str(src) {
             "EOI" => ast::Expression::EndOfInput,
             "WHITESPACE" => ast::Expression::Whitespace,
@@ -149,6 +149,7 @@ fn unquote(src: &str) -> String {
 
     let mut res = String::new();
 
+    let quote = src.chars().next().unwrap(); // first character
     let mut chars = src[1..src.len() - 1].chars();
 
     while let Some(ch) = chars.next() {
@@ -157,7 +158,12 @@ fn unquote(src: &str) -> String {
                 Some('t') => res.push('\t'),
                 Some('n') => res.push('\n'),
                 Some('r') => res.push('\r'),
-                Some(ch) => res.push(ch),
+                Some(ch) => {
+                    if ch != quote {
+                        res.push('\\');
+                    }
+                    res.push(ch);
+                }
                 None => unreachable!(),
             }
         } else {
