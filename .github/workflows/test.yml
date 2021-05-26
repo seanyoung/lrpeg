@@ -13,3 +13,11 @@ jobs:
         run: cargo fmt --all -- --check
       - name: Run cargo clippy
         run: cargo clippy --tests --bins -- -D warnings
+      - name: Run tests
+        run: cargo test
+      - name: Re-generate PEG parser
+        run: cargo run src/peg.peg > peg.rs &&  mv peg.rs src/peg.rs
+        working-directory: ./lrpeg/
+      - name: Test
+        run: cargo build && cargo test
+
