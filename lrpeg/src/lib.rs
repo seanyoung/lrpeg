@@ -481,16 +481,10 @@ impl Generator {
             ast::Expression::MemoDefinition(rule_no) => {
                 format!(
                     r#"match self.rule_memo.get(&(pos, Rule::{})) {{
-                    Some(e) => {{
-                        let mut e = e.clone();
-                        if let Ok(res) = &mut e {{
-                            res.alternative = {};
-                        }}
-                        e
-                    }},
+                    Some(e) => e.clone(),
                     None => Err(pos),
                 }}"#,
-                    grammar.definitions[*rule_no].name, alt,
+                    grammar.definitions[*rule_no].name
                 )
             }
             ast::Expression::Optional(expr) => {

@@ -153,9 +153,7 @@ PEG grammars are a set of rules. In lrpeg, each rule must end with a ";". Parsin
 
 ## How lrpeg is bootstrapped
 
-First of all, we need to bootstrap the PEG. We do this with a very simple
-lalrpop LR(1) PEG grammar. This grammar has some limitations, but it is
-good enough.
+The file `src/peg.peg` contains the grammar for the peg itself. To generate the parser, run `cargo run src/peg.peg > src/peg.rs.new` and then `mv src/peg.rs.new src/peg.rs`.
 
 ## TODO
 

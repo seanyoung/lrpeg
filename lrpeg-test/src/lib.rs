@@ -78,7 +78,7 @@ fn calculator() {
 
     assert_eq!(
         parse("1+2*4"),
-        "(expr, alt=0, \"1+2*4\", (expr, \"1\", (term, alt=3, \"1\", (num, \"1\"))), (Terminal, \"+\"), (term, alt=0, \"2*4\", (term, \"2\", (num, \"2\")), (Terminal, \"*\"), (num, \"4\")))"
+        "(expr, alt=0, \"1+2*4\", (expr, alt=2, \"1\", (term, alt=3, \"1\", (num, \"1\"))), (Terminal, \"+\"), (term, alt=0, \"2*4\", (term, alt=3, \"2\", (num, \"2\")), (Terminal, \"*\"), (num, \"4\")))"
     );
 
     assert_eq!(
@@ -87,11 +87,11 @@ fn calculator() {
     );
     assert_eq!(
         parse("1+1"),
-        "(expr, alt=0, \"1+1\", (expr, \"1\", (term, alt=3, \"1\", (num, \"1\"))), (Terminal, \"+\"), (term, alt=3, \"1\", (num, \"1\")))"
+        "(expr, alt=0, \"1+1\", (expr, alt=2, \"1\", (term, alt=3, \"1\", (num, \"1\"))), (Terminal, \"+\"), (term, alt=3, \"1\", (num, \"1\")))"
     );
     assert_eq!(
         parse("(1+2)*4"),
-        "(expr, alt=2, \"(1+2)*4\", (term, alt=0, \"(1+2)*4\", (term, \"(1+2)\", (Terminal, \"(\"), (expr, alt=0, \"1+2\", (expr, \"1\", (term, alt=3, \"1\", (num, \"1\"))), (Terminal, \"+\"), (term, alt=3, \"2\", (num, \"2\"))), (Terminal, \")\")), (Terminal, \"*\"), (num, \"4\")))"
+        "(expr, alt=2, \"(1+2)*4\", (term, alt=0, \"(1+2)*4\", (term, alt=2, \"(1+2)\", (Terminal, \"(\"), (expr, alt=0, \"1+2\", (expr, alt=2, \"1\", (term, alt=3, \"1\", (num, \"1\"))), (Terminal, \"+\"), (term, alt=3, \"2\", (num, \"2\"))), (Terminal, \")\")), (Terminal, \"*\"), (num, \"4\")))"
     );
     assert_eq!(
         parse("1*(1+1"),
