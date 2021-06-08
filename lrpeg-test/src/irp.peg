@@ -10,7 +10,7 @@ general_item <- "msb" WHITESPACE
     / number_decimals WHITESPACE "%" WHITESPACE
     / number_decimals WHITESPACE;
 
-number_decimals <- re#\d+\\.\d+#
+number_decimals <- re#\d+\.\d+#
     / re#\d+#;
 
 definitions <- '{' definition ("," WHITESPACE definition)* '}' WHITESPACE;
