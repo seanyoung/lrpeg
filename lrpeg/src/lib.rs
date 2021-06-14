@@ -647,7 +647,7 @@ fn escape_string(str: &str) -> String {
             '\\' => res.push_str("\\\\"),
             '\t' => res.push_str("\\t"),
             '\n' => res.push_str("\\n"),
-            '\r' => res.push_str("\\t"),
+            '\r' => res.push_str("\\r"),
             '"' => res.push_str("\\\""),
             ch => res.push(ch),
         }
