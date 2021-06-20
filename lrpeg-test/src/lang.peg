@@ -1,4 +1,5 @@
 lang <- lines* EOI;
 lines <- indent keyword? ("\n" / EOI);
 indent <- (" " / "\t")*;
-keyword <- ("a" / "b" / "c");
+keyword <- ("a" / "b" / "c" / enum);
+enum <- "else" / "crate";

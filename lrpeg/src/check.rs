@@ -1,9 +1,24 @@
 use std::collections::HashSet;
 
 use super::ast;
+use super::utils::KEYWORDS;
 
-pub fn check_grammar(grammar: &ast::Grammar) {
+pub fn check_grammar(grammar: &mut ast::Grammar) {
     let mut used = HashSet::new();
+
+    for def_no in 0..grammar.definitions.len() {
+        let name = grammar.definitions[def_no].name.as_str();
+        if KEYWORDS.contains(&name) {
+            let mut name = name.to_owned();
+            loop {
+                name.insert(0, '_');
+                if !grammar.definitions.iter().any(|def| def.name == name) {
+                    break;
+                }
+            }
+            grammar.definitions[def_no].name = name;
+        }
+    }
 
     for def in &grammar.definitions {
         check_expr(&def.sequence, grammar, &mut used);

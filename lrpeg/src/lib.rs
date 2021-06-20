@@ -9,7 +9,7 @@ mod check;
 mod parser;
 mod utils;
 
-use utils::{escape_char, escape_string};
+use utils::{escape_char, escape_string, KEYWORDS};
 
 /// Generate a parser module for the peg described in source. The result is
 /// a rust module as String.
@@ -41,9 +41,9 @@ impl Generator {
     }
 
     fn build(&mut self, source: &str, modname: &str) -> String {
-        let grammar = parser::parse(&source);
+        let mut grammar = parser::parse(&source);
 
-        check::check_grammar(&grammar);
+        check::check_grammar(&mut grammar);
 
         // prepopulate builtins
         self.symbols.insert(String::from("Dot"));
@@ -92,6 +92,10 @@ impl Generator {
 
                 suffix += 1;
             }
+        }
+
+        if KEYWORDS.contains(&res.as_str()) {
+            res.insert(0, '_');
         }
 
         self.symbols.insert(res.to_owned());
