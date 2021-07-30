@@ -45,14 +45,14 @@ pub fn parse(src: &str) -> ast::Grammar {
 }
 
 fn collect_expr(node: &peg::Node, grammar: &ast::Grammar, src: &str) -> ast::Expression {
-    let alternatives = collect_rules(&node, peg::Rule::sequence);
+    let alternatives = collect_rules(node, peg::Rule::sequence);
 
     let mut alts = Vec::new();
 
     for alt in alternatives {
         let mut list = Vec::new();
 
-        for expr in collect_rules(&alt, peg::Rule::alternative) {
+        for expr in collect_rules(alt, peg::Rule::alternative) {
             list.push(collect_alternative(expr, grammar, src));
         }
 

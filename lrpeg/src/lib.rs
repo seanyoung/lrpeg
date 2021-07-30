@@ -41,7 +41,7 @@ impl Generator {
     }
 
     fn build(&mut self, source: &str, modname: &str) -> String {
-        let mut grammar = parser::parse(&source);
+        let mut grammar = parser::parse(source);
 
         check::check_grammar(&mut grammar);
 
@@ -907,7 +907,7 @@ impl PEG {
                     ));
                 }
                 ast::Expression::StringLiteral(s) => {
-                    let s = escape_string(&s);
+                    let s = escape_string(s);
                     res.push_str(&format!(
                         r#"
                 Terminal::{} => {{
