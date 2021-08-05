@@ -4,9 +4,9 @@ use std::fs;
 use std::path::Path;
 use unicode_xid::UnicodeXID;
 
-mod ast;
+pub mod ast;
 mod check;
-mod parser;
+pub mod parser;
 mod utils;
 
 use utils::{escape_char, escape_string, KEYWORDS};
