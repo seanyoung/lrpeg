@@ -144,10 +144,10 @@ fn repeat() {
         "(foo, alt=4, \"qr\", (Terminal, \"q\"), (Terminal, \"\"), (Dot, \"r\"))"
     );
 
-    assert_eq!(p.parse("qs").unwrap_err(), 1);
-    assert_eq!(p.parse("kl").unwrap_err(), 0);
-    assert_eq!(p.parse("df").unwrap_err(), 0);
-    assert_eq!(p.parse("ad").unwrap_err(), 0);
+    assert_eq!(p.parse("qs").unwrap_err(), (0, 1));
+    assert_eq!(p.parse("kl").unwrap_err(), (0, 0));
+    assert_eq!(p.parse("df").unwrap_err(), (0, 0));
+    assert_eq!(p.parse("ad").unwrap_err(), (0, 0));
 }
 
 #[test]
@@ -174,7 +174,7 @@ fn parse_lang(input: &str) -> Vec<usize> {
                 }
             }
         }
-        Err(pos) => panic!("parse error at {}", pos),
+        Err((line_no, col_no)) => panic!("parse error at {}:{}", line_no, col_no),
     }
 
     res

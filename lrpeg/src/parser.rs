@@ -40,7 +40,9 @@ pub fn parse(src: &str) -> ast::Grammar {
 
             grammar
         }
-        Err(error) => panic!("failed to parse: {}", error),
+        Err((line_no, col_no)) => {
+            panic!("parse failure at {}:{}", line_no, col_no);
+        }
     }
 }
 

@@ -737,7 +737,7 @@ impl PEG {
         }
     }
 
-    pub fn parse(&mut self, input: &str) -> Result<Node, usize> {
+    pub fn parse(&mut self, input: &str) -> Result<Node, (usize, usize)> {
         self.rule_memo.clear();
         self.terminal_memo.clear();
 
@@ -746,9 +746,38 @@ impl PEG {
 
         res.push_str(&format!(
             r#"self.rule_{}(0, input)
-    }}"#,
+        "#,
             &grammar.definitions[0].name,
         ));
+
+        res.push_str(
+            r#".map_err(|pos| {
+                let mut line_no = 0;
+                let mut col_no = pos;
+
+                for l in input
+                    .char_indices()
+                    .filter_map(|(index, c)| if c == '\n' { Some(index + 1) } else { None })
+                {
+                    if pos < l {
+                        break;
+                    }
+
+                    if pos == l {
+                        // chomp off new line
+                        col_no -= 1;
+                        break;
+                    }
+
+                    col_no = pos - l;
+
+                    line_no += 1;
+                }
+
+                (line_no, col_no)
+            })
+        }"#,
+        );
 
         for (rule_no, def) in grammar.definitions.iter().enumerate() {
             if Generator::is_rule_direct_left_recursive(

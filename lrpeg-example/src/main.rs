@@ -66,8 +66,8 @@ fn main() {
 
             println!("result: {}", walk(&node, input));
         }
-        Err(pos) => {
-            eprintln!("parser error at offset {}", pos + 1);
+        Err((line_no, col_no)) => {
+            eprintln!("parser error at {}:{}", line_no, col_no);
         }
     }
 }
