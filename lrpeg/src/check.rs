@@ -33,9 +33,7 @@ pub fn check_grammar(grammar: &mut ast::Grammar) {
         }
     }
 
-    if errors != 0 {
-        panic!("{} errors found", errors);
-    }
+    assert!(errors == 0, "{} errors found", errors);
 }
 
 // just check for references for now

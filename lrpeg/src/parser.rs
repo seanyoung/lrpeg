@@ -18,9 +18,11 @@ pub fn parse(src: &str) -> ast::Grammar {
             for def in &definitions {
                 let name = def.children[0].as_str(src);
 
-                if grammar.lookup.contains_key(name) {
-                    panic!("duplicate rule {}", name);
-                }
+                assert!(
+                    !grammar.lookup.contains_key(name),
+                    "duplicate rule {}",
+                    name
+                );
 
                 grammar
                     .lookup

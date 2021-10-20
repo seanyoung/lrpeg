@@ -720,9 +720,7 @@ impl PEG {
 
         for (expr, name) in &self.terminals {
             if let ast::Expression::Regex(r) = expr {
-                if r.starts_with('^') {
-                    panic!("regex {} should not start with ^", r);
-                }
+                assert!(!r.starts_with('^'), "regex {} should not start with ^", r);
 
                 res.push_str(&format!(
                     r################"
