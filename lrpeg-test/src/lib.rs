@@ -78,24 +78,34 @@ fn calculator() {
 
     assert_eq!(
         parse("1+2*4"),
-        "(expr, alt=0, \"1+2*4\", (expr, alt=2, \"1\", (term, alt=3, \"1\", (num, \"1\"))), (Terminal, \"+\"), (term, alt=0, \"2*4\", (term, alt=3, \"2\", (num, \"2\")), (Terminal, \"*\"), (num, \"4\")))"
+        "(expr, alt=0, \"1+2*4\", (expr, alt=2, \"1\", (term, alt=3, \"1\", (power, alt=1, \"1\", (num, \"1\")))), (Terminal, \"+\"), (term, alt=0, \"2*4\", (term, alt=3, \"2\", (power, alt=1, \"2\", (num, \"2\"))), (Terminal, \"*\"), (power, alt=1, \"4\", (num, \"4\"))))"
     );
 
     assert_eq!(
         parse("1"),
-        "(expr, alt=2, \"1\", (term, alt=3, \"1\", (num, \"1\")))"
+        "(expr, alt=2, \"1\", (term, alt=3, \"1\", (power, alt=1, \"1\", (num, \"1\"))))"
     );
     assert_eq!(
         parse("1+1"),
-        "(expr, alt=0, \"1+1\", (expr, alt=2, \"1\", (term, alt=3, \"1\", (num, \"1\"))), (Terminal, \"+\"), (term, alt=3, \"1\", (num, \"1\")))"
+        "(expr, alt=0, \"1+1\", (expr, alt=2, \"1\", (term, alt=3, \"1\", (power, alt=1, \"1\", (num, \"1\")))), (Terminal, \"+\"), (term, alt=3, \"1\", (power, alt=1, \"1\", (num, \"1\"))))"
     );
     assert_eq!(
         parse("(1+2)*4"),
-        "(expr, alt=2, \"(1+2)*4\", (term, alt=0, \"(1+2)*4\", (term, alt=2, \"(1+2)\", (Terminal, \"(\"), (expr, alt=0, \"1+2\", (expr, alt=2, \"1\", (term, alt=3, \"1\", (num, \"1\"))), (Terminal, \"+\"), (term, alt=3, \"2\", (num, \"2\"))), (Terminal, \")\")), (Terminal, \"*\"), (num, \"4\")))"
+        "(expr, alt=2, \"(1+2)*4\", (term, alt=0, \"(1+2)*4\", (term, alt=2, \"(1+2)\", (Terminal, \"(\"), (expr, alt=0, \"1+2\", (expr, alt=2, \"1\", (term, alt=3, \"1\", (power, alt=1, \"1\", (num, \"1\")))), (Terminal, \"+\"), (term, alt=3, \"2\", (power, alt=1, \"2\", (num, \"2\")))), (Terminal, \")\")), (Terminal, \"*\"), (power, alt=1, \"4\", (num, \"4\"))))"
     );
     assert_eq!(
         parse("1*(1+1"),
-        "(expr, alt=2, \"1\", (term, alt=3, \"1\", (num, \"1\")))"
+        "(expr, alt=2, \"1\", (term, alt=3, \"1\", (power, alt=1, \"1\", (num, \"1\"))))"
+    );
+
+    assert_eq!(
+        parse("3^5^7"),
+        "(expr, alt=2, \"3^5^7\", (term, alt=3, \"3^5^7\", (power, alt=0, \"3^5^7\", (num, \"3\"), (Terminal, \"^\"), (power, alt=0, \"5^7\", (num, \"5\"), (Terminal, \"^\"), (power, alt=1, \"7\", (num, \"7\"))))))"
+    );
+
+    assert_eq!(
+        parse("3*5*7"),
+        "(expr, alt=2, \"3*5*7\", (term, alt=0, \"3*5*7\", (term, alt=0, \"3*5\", (term, alt=3, \"3\", (power, alt=1, \"3\", (num, \"3\"))), (Terminal, \"*\"), (power, alt=1, \"5\", (num, \"5\"))), (Terminal, \"*\"), (power, alt=1, \"7\", (num, \"7\"))))"
     );
 }
 
