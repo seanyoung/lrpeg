@@ -126,27 +126,27 @@ fn repeat() {
 
     assert_eq!(
         parse("xyyyyz"),
-        "(foo, alt=1, \"xyyyyz\", (Terminal, \"x\"), (Terminal, \"yyyy\", (Terminal, \"y\"), (Terminal, \"y\"), (Terminal, \"y\"), (Terminal, \"y\")), (Terminal, \"z\"))"
+        "(foo, alt=1, \"xyyyyz\", (Terminal, \"x\"), (Any, \"yyyy\", (Terminal, \"y\"), (Terminal, \"y\"), (Terminal, \"y\"), (Terminal, \"y\")), (Terminal, \"z\"))"
     );
 
     assert_eq!(
         parse("xz"),
-        "(foo, alt=1, \"xz\", (Terminal, \"x\"), (Terminal, \"\"), (Terminal, \"z\"))"
+        "(foo, alt=1, \"xz\", (Terminal, \"x\"), (Any, \"\"), (Terminal, \"z\"))"
     );
 
     assert_eq!(
         parse("def"),
-        "(foo, alt=2, \"def\", (Terminal, \"d\"), (Terminal, \"e\", (Terminal, \"e\")), (Terminal, \"f\"))"
+        "(foo, alt=2, \"def\", (Terminal, \"d\"), (More, \"e\", (Terminal, \"e\")), (Terminal, \"f\"))"
     );
 
     assert_eq!(
         parse("deeeef"),
-        "(foo, alt=2, \"deeeef\", (Terminal, \"d\"), (Terminal, \"eeee\", (Terminal, \"e\"), (Terminal, \"e\"), (Terminal, \"e\"), (Terminal, \"e\")), (Terminal, \"f\"))"
+        "(foo, alt=2, \"deeeef\", (Terminal, \"d\"), (More, \"eeee\", (Terminal, \"e\"), (Terminal, \"e\"), (Terminal, \"e\"), (Terminal, \"e\")), (Terminal, \"f\"))"
     );
 
     assert_eq!(
         parse("kx"),
-        "(foo, alt=3, \"kx\", (Terminal, \"k\"), (Terminal, \"\"), (Dot, \"x\"))"
+        "(foo, alt=3, \"kx\", (Terminal, \"k\"), (MustNotMatch, \"\"), (Dot, \"x\"))"
     );
 
     assert_eq!(

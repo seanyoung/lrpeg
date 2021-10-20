@@ -79,27 +79,31 @@ fn escape_string(str: &str) -> String {
 #[derive(Clone, Copy, Hash, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 enum Terminal {
-    Literal_0,
+    Literal_2,
+    re,
+    Regex_1,
     Regex,
     Literal_1,
-    Literal_8,
+    Literal_0,
     Literal_9,
-    Literal_6,
-    Literal_2,
-    Regex_0,
     Literal_3,
-    re,
+    Literal_5,
     Literal,
     Literal_7,
+    Literal_8,
     Literal_4,
-    Regex_1,
-    Literal_5,
+    Literal_6,
+    Regex_0,
 }
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 pub enum Rule {
     Terminal,
+    List,
+    MustNotMatch,
+    Any,
+    More,
     grammar,
     definition,
     expression,
@@ -110,20 +114,20 @@ pub enum Rule {
     regex,
     ws,
     COMMENT,
-    WHITESPACE,
-    XID_IDENTIFIER,
-    EOI,
     Dot,
+    XID_IDENTIFIER,
+    WHITESPACE,
+    EOI,
 }
 
 #[allow(non_snake_case)]
 pub struct PEG {
     terminal_memo: HashMap<(usize, Terminal), Option<usize>>,
     rule_memo: HashMap<(usize, Rule), Result<Node, usize>>,
-    regex_Regex: Regex,
-    regex_Regex_0: Regex,
     regex_re: Regex,
     regex_Regex_1: Regex,
+    regex_Regex: Regex,
+    regex_Regex_0: Regex,
 }
 
 impl PEG {
@@ -131,11 +135,11 @@ impl PEG {
         Self {
             terminal_memo: HashMap::new(),
             rule_memo: HashMap::new(),
-            regex_Regex: Regex::new(r########"^"([^"\\]|\\.)*""########).unwrap(),
-            regex_Regex_0: Regex::new(r########"^'([^'\\]|\\.)*'"########).unwrap(),
             regex_re: Regex::new(r########"^re#([^#\\]|\\.)*#"########).unwrap(),
             regex_Regex_1: Regex::new(r########"^//[^
 ]*"########).unwrap(),
+            regex_Regex: Regex::new(r########"^"([^"\\]|\\.)*""########).unwrap(),
+            regex_Regex_0: Regex::new(r########"^'([^'\\]|\\.)*'"########).unwrap(),
         }
     }
 
@@ -205,7 +209,7 @@ impl PEG {
                         Err(start)
                     } else {
                         Ok(Node {
-                            rule: Rule::Terminal,
+                            rule: Rule::More,
                             start,
                             end: pos,
                             children: list,
@@ -349,7 +353,7 @@ impl PEG {
                 list.push(node);
 
                 Node {
-                    rule: Rule::Terminal,
+                    rule: Rule::List,
                     start,
                     end,
                     children: list,
@@ -366,7 +370,7 @@ impl PEG {
                     }
 
                     Ok(Node {
-                        rule: Rule::Terminal,
+                        rule: Rule::Any,
                         start,
                         end: pos,
                         children: list,
@@ -1037,12 +1041,22 @@ impl PEG {
             None
         } else {
             match terminal {
-                Terminal::Literal_0 => {
-                    if input[pos..].starts_with(';') {
-                        Some(pos + ";".len())
+                Terminal::Literal_2 => {
+                    if input[pos..].starts_with('?') {
+                        Some(pos + "?".len())
                     } else {
                         None
                     }
+                }
+                Terminal::re => {
+                    self.regex_re.find(&input[pos..]).map(|m| {
+                        m.end() + pos
+                    })
+                }
+                Terminal::Regex_1 => {
+                    self.regex_Regex_1.find(&input[pos..]).map(|m| {
+                        m.end() + pos
+                    })
                 }
                 Terminal::Regex => {
                     self.regex_Regex.find(&input[pos..]).map(|m| {
@@ -1056,9 +1070,9 @@ impl PEG {
                         None
                     }
                 }
-                Terminal::Literal_8 => {
-                    if input[pos..].starts_with('!') {
-                        Some(pos + "!".len())
+                Terminal::Literal_0 => {
+                    if input[pos..].starts_with(';') {
+                        Some(pos + ";".len())
                     } else {
                         None
                     }
@@ -1070,25 +1084,6 @@ impl PEG {
                         None
                     }
                 }
-                Terminal::Literal_6 => {
-                    if input[pos..].starts_with(')') {
-                        Some(pos + ")".len())
-                    } else {
-                        None
-                    }
-                }
-                Terminal::Literal_2 => {
-                    if input[pos..].starts_with('?') {
-                        Some(pos + "?".len())
-                    } else {
-                        None
-                    }
-                }
-                Terminal::Regex_0 => {
-                    self.regex_Regex_0.find(&input[pos..]).map(|m| {
-                        m.end() + pos
-                    })
-                }
                 Terminal::Literal_3 => {
                     if input[pos..].starts_with('*') {
                         Some(pos + "*".len())
@@ -1096,10 +1091,12 @@ impl PEG {
                         None
                     }
                 }
-                Terminal::re => {
-                    self.regex_re.find(&input[pos..]).map(|m| {
-                        m.end() + pos
-                    })
+                Terminal::Literal_5 => {
+                    if input[pos..].starts_with('(') {
+                        Some(pos + "(".len())
+                    } else {
+                        None
+                    }
                 }
                 Terminal::Literal => {
                     if input[pos..].starts_with("<-") {
@@ -1115,6 +1112,13 @@ impl PEG {
                         None
                     }
                 }
+                Terminal::Literal_8 => {
+                    if input[pos..].starts_with('!') {
+                        Some(pos + "!".len())
+                    } else {
+                        None
+                    }
+                }
                 Terminal::Literal_4 => {
                     if input[pos..].starts_with('+') {
                         Some(pos + "+".len())
@@ -1122,17 +1126,17 @@ impl PEG {
                         None
                     }
                 }
-                Terminal::Regex_1 => {
-                    self.regex_Regex_1.find(&input[pos..]).map(|m| {
-                        m.end() + pos
-                    })
-                }
-                Terminal::Literal_5 => {
-                    if input[pos..].starts_with('(') {
-                        Some(pos + "(".len())
+                Terminal::Literal_6 => {
+                    if input[pos..].starts_with(')') {
+                        Some(pos + ")".len())
                     } else {
                         None
                     }
+                }
+                Terminal::Regex_0 => {
+                    self.regex_Regex_0.find(&input[pos..]).map(|m| {
+                        m.end() + pos
+                    })
                 }
             }
         };

@@ -353,7 +353,7 @@ impl Generator {
                 }}
             }})
         }}"#,
-                    rule.unwrap_or("Terminal"),
+                    rule.unwrap_or("List"),
                     alt,
                 ));
 
@@ -510,7 +510,7 @@ impl Generator {
                     Err(_) => Ok(Node::new(Rule::{}, pos, pos, {})),
                 }}"#,
                     self.emit_expr(expr, rule, "None", grammar),
-                    rule.unwrap_or("Terminal"),
+                    rule.unwrap_or("MustNotMatch"),
                     alt,
                 )
             }
@@ -539,7 +539,7 @@ impl Generator {
                     }})
                 }}"#,
                     self.emit_expr(expr, rule, "None", grammar),
-                    rule.unwrap_or("Terminal"),
+                    rule.unwrap_or("Any"),
                     alt
                 )
             }
@@ -572,7 +572,7 @@ impl Generator {
                     }}
                 }}"#,
                     self.emit_expr(expr, rule, "None", grammar),
-                    rule.unwrap_or("Terminal"),
+                    rule.unwrap_or("More"),
                     alt,
                 )
             }
@@ -677,6 +677,10 @@ enum Terminal {
 #[allow(non_camel_case_types)]
 pub enum Rule {
     Terminal,
+    List,
+    MustNotMatch,
+    Any,
+    More,
 "#,
         );
 
