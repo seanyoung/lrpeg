@@ -79,20 +79,21 @@ fn escape_string(str: &str) -> String {
 #[derive(Clone, Copy, Hash, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 enum Terminal {
-    re,
-    Literal_9,
-    Regex,
-    Literal_7,
-    Literal_5,
     Literal_0,
-    Literal_6,
+    Regex,
     Literal_1,
     Literal_8,
+    Literal_9,
+    Literal_6,
     Literal_2,
-    Literal,
-    Literal_4,
     Regex_0,
     Literal_3,
+    re,
+    Literal,
+    Literal_7,
+    Literal_4,
+    Regex_1,
+    Literal_5,
 }
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
@@ -108,18 +109,21 @@ pub enum Rule {
     string_literal,
     regex,
     ws,
+    COMMENT,
     WHITESPACE,
-    EOI,
     XID_IDENTIFIER,
+    EOI,
+    Dot,
 }
 
 #[allow(non_snake_case)]
 pub struct PEG {
     terminal_memo: HashMap<(usize, Terminal), Option<usize>>,
     rule_memo: HashMap<(usize, Rule), Result<Node, usize>>,
-    regex_re: Regex,
     regex_Regex: Regex,
     regex_Regex_0: Regex,
+    regex_re: Regex,
+    regex_Regex_1: Regex,
 }
 
 impl PEG {
@@ -127,9 +131,11 @@ impl PEG {
         Self {
             terminal_memo: HashMap::new(),
             rule_memo: HashMap::new(),
-            regex_re: Regex::new(r########"^re#([^#\\]|\\.)*#"########).unwrap(),
             regex_Regex: Regex::new(r########"^"([^"\\]|\\.)*""########).unwrap(),
             regex_Regex_0: Regex::new(r########"^'([^'\\]|\\.)*'"########).unwrap(),
+            regex_re: Regex::new(r########"^re#([^#\\]|\\.)*#"########).unwrap(),
+            regex_Regex_1: Regex::new(r########"^//[^
+]*"########).unwrap(),
         }
     }
 
@@ -849,15 +855,85 @@ impl PEG {
             return res.clone();
         }
 
-        let res = self.builtin_whitespace(pos, input, None)
+        let res = {
+                    let mut list = Vec::new();
+                    let start = pos;
+                    let mut pos = pos;
+
+                    while let Ok(node) = self.rule_COMMENT(pos, input)
                         .map(|node| { Node {
                             rule: Rule::ws,
                             start: node.start,
                             end: node.end,
                             children: vec![node],
-                            alternative: None,
+                            alternative: Some(0),
                         }
-                    });
+                    })
+            .or_else(|_| self.builtin_whitespace(pos, input, None)
+                        .map(|node| { Node {
+                            rule: Rule::ws,
+                            start: node.start,
+                            end: node.end,
+                            children: vec![node],
+                            alternative: Some(1),
+                        }
+                    })) {
+                        if pos == node.end {
+                            // must be making progress
+                            break;
+                        }
+                        pos = node.end;
+                        list.push(node);
+                    }
+
+                    Ok(Node {
+                        rule: Rule::ws,
+                        start,
+                        end: pos,
+                        children: list,
+                        alternative: None,
+                    })
+                };
+
+        // Note that failure to match is also cached using Err()
+        self.rule_memo.insert(key, res.clone());
+
+        res
+    }
+
+    #[allow(non_snake_case)]
+    fn rule_COMMENT(&mut self, pos: usize, input: &str) -> Result<Node, usize> {
+        let key = (pos, Rule::COMMENT);
+
+        if let Some(res) = self.rule_memo.get(&key) {
+            return res.clone();
+        }
+
+        let res = {
+            let mut list = Vec::new();
+            let start = pos;
+
+            self.match_terminal(pos, input, Terminal::Regex_1)
+                    .map(|end| Node::new(Rule::Terminal, pos, end, None))
+                    .ok_or(pos)
+            .and_then(|node| {
+                let pos = node.end;
+                list.push(node);
+                self.builtin_dot(pos, input, None)
+            })
+            .map(|node| {
+                let end = node.end;
+                list.push(node);
+
+                Node {
+                    rule: Rule::COMMENT,
+                    start,
+                    end,
+                    children: list,
+                    alternative: None,
+                }
+            })
+        };
 
         // Note that failure to match is also cached using Err()
         self.rule_memo.insert(key, res.clone());
@@ -890,6 +966,20 @@ impl PEG {
         // not worth caching
         if pos == input.len() {
             Ok(Node::new(Rule::EOI, pos, pos, alt))
+        } else {
+            Err(pos)
+        }
+    }
+
+    fn builtin_dot(&self, pos: usize, input: &str, alt: Option<u16>) -> Result<Node, usize> {
+        // not worth caching
+        let mut chars = input[pos..].char_indices();
+        if chars.next().is_some() {
+            if let Some((len, _)) = chars.next() {
+                Ok(Node::new(Rule::Dot, pos, pos + len, alt))
+            } else {
+                Ok(Node::new(Rule::Dot, pos, input.len(), alt))
+            }
         } else {
             Err(pos)
         }
@@ -947,14 +1037,9 @@ impl PEG {
             None
         } else {
             match terminal {
-                Terminal::re => {
-                    self.regex_re.find(&input[pos..]).map(|m| {
-                        m.end() + pos
-                    })
-                }
-                Terminal::Literal_9 => {
-                    if input[pos..].starts_with('.') {
-                        Some(pos + ".".len())
+                Terminal::Literal_0 => {
+                    if input[pos..].starts_with(';') {
+                        Some(pos + ";".len())
                     } else {
                         None
                     }
@@ -963,34 +1048,6 @@ impl PEG {
                     self.regex_Regex.find(&input[pos..]).map(|m| {
                         m.end() + pos
                     })
-                }
-                Terminal::Literal_7 => {
-                    if input[pos..].starts_with('&') {
-                        Some(pos + "&".len())
-                    } else {
-                        None
-                    }
-                }
-                Terminal::Literal_5 => {
-                    if input[pos..].starts_with('(') {
-                        Some(pos + "(".len())
-                    } else {
-                        None
-                    }
-                }
-                Terminal::Literal_0 => {
-                    if input[pos..].starts_with(';') {
-                        Some(pos + ";".len())
-                    } else {
-                        None
-                    }
-                }
-                Terminal::Literal_6 => {
-                    if input[pos..].starts_with(')') {
-                        Some(pos + ")".len())
-                    } else {
-                        None
-                    }
                 }
                 Terminal::Literal_1 => {
                     if input[pos..].starts_with('/') {
@@ -1006,23 +1063,23 @@ impl PEG {
                         None
                     }
                 }
+                Terminal::Literal_9 => {
+                    if input[pos..].starts_with('.') {
+                        Some(pos + ".".len())
+                    } else {
+                        None
+                    }
+                }
+                Terminal::Literal_6 => {
+                    if input[pos..].starts_with(')') {
+                        Some(pos + ")".len())
+                    } else {
+                        None
+                    }
+                }
                 Terminal::Literal_2 => {
                     if input[pos..].starts_with('?') {
                         Some(pos + "?".len())
-                    } else {
-                        None
-                    }
-                }
-                Terminal::Literal => {
-                    if input[pos..].starts_with("<-") {
-                        Some(pos + "<-".len())
-                    } else {
-                        None
-                    }
-                }
-                Terminal::Literal_4 => {
-                    if input[pos..].starts_with('+') {
-                        Some(pos + "+".len())
                     } else {
                         None
                     }
@@ -1035,6 +1092,44 @@ impl PEG {
                 Terminal::Literal_3 => {
                     if input[pos..].starts_with('*') {
                         Some(pos + "*".len())
+                    } else {
+                        None
+                    }
+                }
+                Terminal::re => {
+                    self.regex_re.find(&input[pos..]).map(|m| {
+                        m.end() + pos
+                    })
+                }
+                Terminal::Literal => {
+                    if input[pos..].starts_with("<-") {
+                        Some(pos + "<-".len())
+                    } else {
+                        None
+                    }
+                }
+                Terminal::Literal_7 => {
+                    if input[pos..].starts_with('&') {
+                        Some(pos + "&".len())
+                    } else {
+                        None
+                    }
+                }
+                Terminal::Literal_4 => {
+                    if input[pos..].starts_with('+') {
+                        Some(pos + "+".len())
+                    } else {
+                        None
+                    }
+                }
+                Terminal::Regex_1 => {
+                    self.regex_Regex_1.find(&input[pos..]).map(|m| {
+                        m.end() + pos
+                    })
+                }
+                Terminal::Literal_5 => {
+                    if input[pos..].starts_with('(') {
+                        Some(pos + "(".len())
                     } else {
                         None
                     }
