@@ -1,5 +1,5 @@
 use super::ast;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 include!("peg.rs");
 
@@ -11,7 +11,7 @@ pub fn parse(src: &str) -> ast::Grammar {
             let definitions = collect_rules(&node, peg::Rule::definition);
 
             let mut grammar = ast::Grammar {
-                lookup: HashMap::new(),
+                lookup: BTreeMap::new(),
                 definitions: Vec::new(),
             };
 

@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashSet};
 use std::ffi::OsStr;
 use std::fs;
 use std::path::Path;
@@ -21,8 +21,8 @@ pub fn build_parser(source: &str, modname: &str) -> String {
 
 struct Generator {
     symbols: HashSet<String>,
-    builtins: HashMap<ast::Expression, String>,
-    terminals: HashMap<ast::Expression, String>,
+    builtins: BTreeMap<ast::Expression, String>,
+    terminals: BTreeMap<ast::Expression, String>,
 }
 
 impl Default for Generator {
@@ -35,8 +35,8 @@ impl Generator {
     fn new() -> Self {
         Generator {
             symbols: HashSet::new(),
-            builtins: HashMap::new(),
-            terminals: HashMap::new(),
+            builtins: BTreeMap::new(),
+            terminals: BTreeMap::new(),
         }
     }
 

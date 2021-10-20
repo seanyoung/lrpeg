@@ -1,9 +1,9 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 #[derive(Clone, Debug)]
 pub struct Grammar {
     // FIXME: use &str rather than owned String
-    pub lookup: HashMap<String, usize>,
+    pub lookup: BTreeMap<String, usize>,
     pub definitions: Vec<Definition>,
 }
 
@@ -13,7 +13,7 @@ pub struct Definition {
     pub sequence: Expression,
 }
 
-#[derive(Clone, Hash, Eq, PartialEq, Debug)]
+#[derive(Clone, Hash, Eq, PartialEq, Ord, PartialOrd, Debug)]
 pub enum Expression {
     Dot,
     Whitespace,
