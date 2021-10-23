@@ -154,10 +154,10 @@ fn repeat() {
         "(foo, alt=4, \"qr\", (Terminal, \"q\"), (Terminal, \"\"), (Dot, \"r\"))"
     );
 
-    assert_eq!(p.parse("qs").unwrap_err(), (0, 1));
-    assert_eq!(p.parse("kl").unwrap_err(), (0, 0));
-    assert_eq!(p.parse("df").unwrap_err(), (0, 0));
-    assert_eq!(p.parse("ad").unwrap_err(), (0, 0));
+    assert_eq!(p.parse("qs").unwrap_err(), (1, 1));
+    assert_eq!(p.parse("kl").unwrap_err(), (1, 0));
+    assert_eq!(p.parse("df").unwrap_err(), (1, 0));
+    assert_eq!(p.parse("ad").unwrap_err(), (1, 0));
 }
 
 #[test]

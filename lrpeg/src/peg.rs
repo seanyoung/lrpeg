@@ -149,7 +149,7 @@ impl PEG {
 
         self.rule_grammar(0, input)
         .map_err(|pos| {
-                let mut line_no = 0;
+                let mut line_no = 1;
                 let mut col_no = pos;
 
                 for l in input

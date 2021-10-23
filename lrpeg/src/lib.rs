@@ -211,6 +211,7 @@ impl Generator {
         res
     }
 
+    #[allow(clippy::branches_sharing_code)]
     fn emit_left_recursive_rule(
         &self,
         rule_no: usize,
@@ -754,7 +755,7 @@ impl PEG {
 
         res.push_str(
             r#".map_err(|pos| {
-                let mut line_no = 0;
+                let mut line_no = 1;
                 let mut col_no = pos;
 
                 for l in input
