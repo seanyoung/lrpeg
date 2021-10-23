@@ -1013,7 +1013,7 @@ impl PEG {
         let mut chars = input[pos..].char_indices();
         let mut end = pos;
         let mut res = if let Some((_, ch)) = chars.next() {
-            if UnicodeXID::is_xid_start(ch) {
+            if UnicodeXID::is_xid_start(ch) || ch == '_' {
                 while {
                     if let Some((off, ch)) = chars.next() {
                         end = pos + off;
