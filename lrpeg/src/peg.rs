@@ -744,6 +744,16 @@ impl PEG {
                 list.push(node);
                 self.rule_ws(pos, input)
             })
+            .and_then(|node| {
+                let pos = node.end;
+                list.push(node);
+                match self.match_terminal(pos, input, Terminal::Literal)
+                    .map(|end| Node::new(Rule::Terminal, pos, end, None))
+                    .ok_or(pos) {
+                    Ok(_) => Err(pos),
+                    Err(_) => Ok(Node::new(Rule::MustNotMatch, pos, pos, None)),
+                }
+            })
             .map(|node| {
                 let end = node.end;
                 list.push(node);

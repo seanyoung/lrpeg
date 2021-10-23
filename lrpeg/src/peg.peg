@@ -15,7 +15,7 @@ alternative <- alternative "?" ws
 primary <- "&" ws primary
         / "!" ws primary
         / regex ws
-        / XID_IDENTIFIER ws
+        / XID_IDENTIFIER ws (!"<-")
         / string_literal ws
         / "." ws;
 

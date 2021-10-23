@@ -1,14 +1,14 @@
 expr <- expr "+" term
     / expr "-" term
-    / term;
+    / term
 
 term <- term "*" power
     / term "/" power
     / "(" expr ")"
-    / power;
+    / power
 
 // power is right-associative
 power <- num "^" power
-    / num;
+    / num
 
 num <- re#[0-9]+#;
