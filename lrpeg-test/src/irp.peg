@@ -53,8 +53,8 @@ parameter_specs <- "[" WHITESPACE parameter_spec ("," WHITESPACE parameter_spec)
 parameter_spec <- XID_IDENTIFIER WHITESPACE "@"? WHITESPACE ":" WHITESPACE number WHITESPACE ".." WHITESPACE number WHITESPACE ('=' expression)? WHITESPACE;
 
 number <- re#0x[0-9a-fA-F]+#
-    / re#0b[01]+#
-    / re#\d+#
+    const_bit:/ re#0b[01]+#
+    const_dec:/ re#\d+#
     / "UINT8_MAX"
     / "UINT16_MAX"
     / "UINT32_MAX"
@@ -67,11 +67,12 @@ primary_item <- number
 bit_field <- "~"? primary_item ":" "-"? primary_item (":" primary_item)?
     / "~"? primary_item "::" primary_item;
 
-expression <- "~" expression
-    / "!" expression
-    / "-" expression
-    / "#" expression
-    / expression1 "**" expression
+expression <-
+    tilde:/ "~" expression
+    not:/ "!" expression
+    minus:/ "-" expression
+    count:/ "#" expression
+    power:/ expression1 "**" expression
     / expression1;
 
 expression1 <- expression1 ('*' / '/' / '%') expression1

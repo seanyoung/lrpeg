@@ -78,23 +78,25 @@ fn collect_alternative(node: &peg::Node, grammar: &ast::Grammar, src: &str) -> a
     assert_eq!(node.rule, peg::Rule::alternative);
 
     match node.alternative {
-        Some(0) => ast::Expression::Optional(Box::new(collect_alternative(
+        Some(0) => collect_alternative(&node.children[1], grammar, src),
+        Some(1) => collect_alternative(&node.children[3], grammar, src),
+        Some(2) => ast::Expression::Optional(Box::new(collect_alternative(
             &node.children[0],
             grammar,
             src,
         ))),
-        Some(1) => ast::Expression::Any(Box::new(collect_alternative(
+        Some(3) => ast::Expression::Any(Box::new(collect_alternative(
             &node.children[0],
             grammar,
             src,
         ))),
-        Some(2) => ast::Expression::More(Box::new(collect_alternative(
+        Some(4) => ast::Expression::More(Box::new(collect_alternative(
             &node.children[0],
             grammar,
             src,
         ))),
-        Some(3) => collect_expr(&node.children[2], grammar, src),
-        Some(4) => collect_primary(&node.children[0], grammar, src),
+        Some(5) => collect_expr(&node.children[2], grammar, src),
+        Some(6) => collect_primary(&node.children[0], grammar, src),
         _ => unreachable!(),
     }
 }
