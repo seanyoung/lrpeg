@@ -2,7 +2,6 @@ use std::collections::BTreeMap;
 
 #[derive(Clone, Debug)]
 pub struct Grammar {
-    // FIXME: use &str rather than owned String
     pub lookup: BTreeMap<String, usize>,
     pub definitions: Vec<Definition>,
 }
@@ -14,7 +13,24 @@ pub struct Definition {
 }
 
 #[derive(Clone, Hash, Eq, PartialEq, Ord, PartialOrd, Debug)]
-pub enum Expression {
+pub struct Expression {
+    pub label: Option<String>,
+    pub alt: Option<String>,
+    pub expr: BareExpression,
+}
+
+impl From<BareExpression> for Expression {
+    fn from(expr: BareExpression) -> Self {
+        Expression {
+            label: None,
+            alt: None,
+            expr,
+        }
+    }
+}
+
+#[derive(Clone, Hash, Eq, PartialEq, Ord, PartialOrd, Debug)]
+pub enum BareExpression {
     Dot,
     Whitespace,
     EndOfInput,

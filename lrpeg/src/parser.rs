@@ -30,7 +30,11 @@ pub fn parse(src: &str) -> ast::Grammar {
 
                 grammar.definitions.push(ast::Definition {
                     name: name.to_owned(),
-                    sequence: ast::Expression::Dot,
+                    sequence: ast::Expression {
+                        alt: None,
+                        label: None,
+                        expr: ast::BareExpression::Dot,
+                    },
                 })
             }
 
@@ -49,11 +53,11 @@ pub fn parse(src: &str) -> ast::Grammar {
 }
 
 fn collect_expr(node: &peg::Node, grammar: &ast::Grammar, src: &str) -> ast::Expression {
-    let alternatives = collect_rules(node, peg::Rule::sequence);
+    let alternatives = collect_alternatives(node, src);
 
     let mut alts = Vec::new();
 
-    for alt in alternatives {
+    for (label, alt) in alternatives {
         let mut list = Vec::new();
 
         for expr in collect_rules(alt, peg::Rule::alternative) {
@@ -61,16 +65,26 @@ fn collect_expr(node: &peg::Node, grammar: &ast::Grammar, src: &str) -> ast::Exp
         }
 
         alts.push(if list.len() == 1 {
-            list[0].clone()
+            let mut e = list[0].clone();
+            e.alt = label;
+            e
         } else {
-            ast::Expression::List(list)
+            ast::Expression {
+                alt: label,
+                label: None,
+                expr: ast::BareExpression::List(list),
+            }
         });
     }
 
     if alts.len() == 1 {
         alts[0].clone()
     } else {
-        ast::Expression::Alternatives(alts)
+        ast::Expression {
+            alt: None,
+            label: None,
+            expr: ast::BareExpression::Alternatives(alts),
+        }
     }
 }
 
@@ -78,23 +92,34 @@ fn collect_alternative(node: &peg::Node, grammar: &ast::Grammar, src: &str) -> a
     assert_eq!(node.rule, peg::Rule::alternative);
 
     match node.alternative {
-        Some(0) => collect_alternative(&node.children[1], grammar, src),
-        Some(1) => collect_alternative(&node.children[3], grammar, src),
-        Some(2) => ast::Expression::Optional(Box::new(collect_alternative(
+        Some(0) => {
+            let mut expr = collect_alternative(&node.children[1], grammar, src);
+            expr.label = Some(String::from(""));
+            expr
+        }
+        Some(1) => {
+            let mut expr = collect_alternative(&node.children[3], grammar, src);
+            expr.label = Some(node.children[0].as_str(src).to_string());
+            expr
+        }
+        Some(2) => ast::BareExpression::Optional(Box::new(collect_alternative(
             &node.children[0],
             grammar,
             src,
-        ))),
-        Some(3) => ast::Expression::Any(Box::new(collect_alternative(
+        )))
+        .into(),
+        Some(3) => ast::BareExpression::Any(Box::new(collect_alternative(
             &node.children[0],
             grammar,
             src,
-        ))),
-        Some(4) => ast::Expression::More(Box::new(collect_alternative(
+        )))
+        .into(),
+        Some(4) => ast::BareExpression::More(Box::new(collect_alternative(
             &node.children[0],
             grammar,
             src,
-        ))),
+        )))
+        .into(),
         Some(5) => collect_expr(&node.children[2], grammar, src),
         Some(6) => collect_primary(&node.children[0], grammar, src),
         _ => unreachable!(),
@@ -105,31 +130,73 @@ fn collect_primary(node: &peg::Node, grammar: &ast::Grammar, src: &str) -> ast::
     assert_eq!(node.rule, peg::Rule::primary);
 
     match node.alternative {
-        Some(0) => {
-            ast::Expression::MustMatch(Box::new(collect_primary(&node.children[2], grammar, src)))
-        }
-        Some(1) => ast::Expression::MustNotMatch(Box::new(collect_primary(
+        Some(0) => ast::BareExpression::MustMatch(Box::new(collect_primary(
             &node.children[2],
             grammar,
             src,
-        ))),
-        Some(2) => ast::Expression::Regex(unquote(&node.children[0].as_str(src)[2..])),
+        )))
+        .into(),
+        Some(1) => ast::BareExpression::MustNotMatch(Box::new(collect_primary(
+            &node.children[2],
+            grammar,
+            src,
+        )))
+        .into(),
+        Some(2) => ast::BareExpression::Regex(unquote(&node.children[0].as_str(src)[2..])).into(),
         Some(3) => match node.children[0].as_str(src) {
-            "EOI" => ast::Expression::EndOfInput,
-            "WHITESPACE" => ast::Expression::Whitespace,
-            "XID_IDENTIFIER" => ast::Expression::XidIdentifier,
+            "EOI" => ast::BareExpression::EndOfInput.into(),
+            "WHITESPACE" => ast::BareExpression::Whitespace.into(),
+            "XID_IDENTIFIER" => ast::BareExpression::XidIdentifier.into(),
             id => {
                 if let Some(def_no) = grammar.lookup.get(id) {
-                    ast::Expression::Definition(*def_no)
+                    ast::BareExpression::Definition(*def_no).into()
                 } else {
                     panic!("rule {} not found", id);
                 }
             }
         },
-        Some(4) => ast::Expression::StringLiteral(unquote(node.children[0].as_str(src))),
-        Some(5) => ast::Expression::Dot,
+        Some(4) => ast::BareExpression::StringLiteral(unquote(node.children[0].as_str(src))).into(),
+        Some(5) => ast::BareExpression::Dot.into(),
         _ => unreachable!(),
     }
+}
+
+fn collect_alternatives<'a>(
+    node: &'a peg::Node,
+    src: &str,
+) -> Vec<(Option<String>, &'a peg::Node)> {
+    assert_eq!(node.rule, peg::Rule::expression);
+
+    let mut alternatives = Vec::new();
+
+    fn collect_alternatives<'a>(
+        node: &'a peg::Node,
+        alternatives: &mut Vec<(Option<String>, &'a peg::Node)>,
+        src: &str,
+    ) {
+        for node in &node.children {
+            assert_eq!(node.children[0].rule, peg::Rule::sequence_marker);
+            assert_eq!(node.children[2].rule, peg::Rule::sequence);
+
+            let label = if node.alternative == Some(1) {
+                Some(node.children[0].as_str(src).to_string())
+            } else {
+                None
+            };
+
+            alternatives.push((label, &node.children[2]));
+        }
+    }
+
+    if node.alternative == Some(0) {
+        alternatives.push((None, &node.children[0]));
+        assert_eq!(node.children[1].rule, peg::Rule::Any);
+        collect_alternatives(&node.children[1], &mut alternatives, src);
+    } else {
+        collect_alternatives(node, &mut alternatives, src);
+    }
+
+    alternatives
 }
 
 fn collect_rules(node: &peg::Node, rule: peg::Rule) -> Vec<&peg::Node> {

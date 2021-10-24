@@ -104,48 +104,48 @@ impl Generator {
     }
 
     fn collect_terminals_recursive(&mut self, expr: &ast::Expression) {
-        match expr {
-            ast::Expression::StringLiteral(s) => {
+        match &expr.expr {
+            ast::BareExpression::StringLiteral(s) => {
                 if !self.terminals.contains_key(expr) {
                     let s = self.terminal_to_identifier(s, "Literal");
 
                     self.terminals.insert(expr.clone(), s);
                 }
             }
-            ast::Expression::Regex(s) => {
+            ast::BareExpression::Regex(s) => {
                 if !self.terminals.contains_key(expr) {
                     let s = self.terminal_to_identifier(s, "Regex");
 
                     self.terminals.insert(expr.clone(), s);
                 }
             }
-            ast::Expression::MustMatch(expr)
-            | ast::Expression::MustNotMatch(expr)
-            | ast::Expression::Optional(expr)
-            | ast::Expression::Any(expr)
-            | ast::Expression::More(expr) => {
+            ast::BareExpression::MustMatch(expr)
+            | ast::BareExpression::MustNotMatch(expr)
+            | ast::BareExpression::Optional(expr)
+            | ast::BareExpression::Any(expr)
+            | ast::BareExpression::More(expr) => {
                 self.collect_terminals_recursive(expr);
             }
-            ast::Expression::List(list) | ast::Expression::Alternatives(list) => {
+            ast::BareExpression::List(list) | ast::BareExpression::Alternatives(list) => {
                 for expr in list {
                     self.collect_terminals_recursive(expr);
                 }
             }
-            ast::Expression::Dot => {
+            ast::BareExpression::Dot => {
                 self.builtins.insert(expr.clone(), String::from("Dot"));
             }
-            ast::Expression::Whitespace => {
+            ast::BareExpression::Whitespace => {
                 self.builtins
                     .insert(expr.clone(), String::from("WHITESPACE"));
             }
-            ast::Expression::EndOfInput => {
+            ast::BareExpression::EndOfInput => {
                 self.builtins.insert(expr.clone(), String::from("EOI"));
             }
-            ast::Expression::XidIdentifier => {
+            ast::BareExpression::XidIdentifier => {
                 self.builtins
                     .insert(expr.clone(), String::from("XID_IDENTIFIER"));
             }
-            ast::Expression::MemoDefinition(_) | ast::Expression::Definition(_) => (),
+            ast::BareExpression::MemoDefinition(_) | ast::BareExpression::Definition(_) => (),
         }
     }
 
@@ -155,15 +155,15 @@ impl Generator {
         examined_rules: &mut Vec<usize>,
         grammar: &ast::Grammar,
     ) -> bool {
-        match expr {
-            ast::Expression::Alternatives(list) => list.iter().any(|expr| {
+        match &expr.expr {
+            ast::BareExpression::Alternatives(list) => list.iter().any(|expr| {
                 Generator::is_rule_direct_left_recursive(rule_no, expr, examined_rules, grammar)
             }),
-            ast::Expression::List(list) => {
+            ast::BareExpression::List(list) => {
                 Generator::is_rule_direct_left_recursive(rule_no, &list[0], examined_rules, grammar)
             }
-            ast::Expression::Definition(no) if rule_no == *no => true,
-            ast::Expression::Definition(no) => {
+            ast::BareExpression::Definition(no) if rule_no == *no => true,
+            ast::BareExpression::Definition(no) => {
                 if !examined_rules.contains(no) {
                     examined_rules.push(*no);
                     Generator::is_rule_direct_left_recursive(
@@ -234,7 +234,7 @@ impl Generator {
         );
 
         // first emit the non-left recursive alternatives
-        if let ast::Expression::Alternatives(list) = &def.sequence {
+        if let ast::BareExpression::Alternatives(list) = &def.sequence.expr {
             res.push_str(
                 r#"
 
@@ -254,16 +254,16 @@ impl Generator {
                     &mut Vec::new(),
                     grammar,
                 ) {
-                    if let ast::Expression::List(list) = entry {
-                        if let ast::Expression::Definition(rule_no) = list[0] {
-                            list[0] = ast::Expression::MemoDefinition(rule_no);
+                    if let ast::BareExpression::List(list) = &mut entry.expr {
+                        if let ast::BareExpression::Definition(rule_no) = list[0].expr {
+                            list[0] = ast::BareExpression::MemoDefinition(rule_no).into();
                         }
                     }
                 }
             }
 
             res.push_str(&self.emit_expr(
-                &ast::Expression::Alternatives(list),
+                &ast::BareExpression::Alternatives(list).into(),
                 Some(&def.name),
                 "None",
                 grammar,
@@ -312,8 +312,8 @@ impl Generator {
         alt: &str,
         grammar: &ast::Grammar,
     ) -> String {
-        match expr {
-            ast::Expression::List(list) => {
+        match &expr.expr {
+            ast::BareExpression::List(list) => {
                 let mut iter = list.iter();
 
                 let first = iter.next().unwrap();
@@ -360,7 +360,7 @@ impl Generator {
 
                 res
             }
-            ast::Expression::Whitespace => {
+            ast::BareExpression::Whitespace => {
                 if let Some(rule) = rule {
                     format!(
                         r#"self.builtin_whitespace(pos, input, None)
@@ -378,7 +378,7 @@ impl Generator {
                     format!(r#"self.builtin_whitespace(pos, input, {})"#, alt)
                 }
             }
-            ast::Expression::EndOfInput => {
+            ast::BareExpression::EndOfInput => {
                 if let Some(rule) = rule {
                     format!(
                         r#"self.builtin_eoi(pos, input, None)
@@ -396,7 +396,7 @@ impl Generator {
                     format!(r#"self.builtin_eoi(pos, input, {})"#, alt)
                 }
             }
-            ast::Expression::Dot => {
+            ast::BareExpression::Dot => {
                 if let Some(rule) = rule {
                     format!(
                         r#"self.builtin_dot(pos, input, None)
@@ -414,7 +414,7 @@ impl Generator {
                     format!(r#"self.builtin_dot(pos, input, {})"#, alt)
                 }
             }
-            ast::Expression::XidIdentifier => {
+            ast::BareExpression::XidIdentifier => {
                 if let Some(rule) = rule {
                     format!(
                         r#"self.builtin_xid_identifier(pos, input, None)
@@ -432,7 +432,7 @@ impl Generator {
                     format!(r#"self.builtin_xid_identifier(pos, input, {})"#, alt)
                 }
             }
-            ast::Expression::StringLiteral(_) | ast::Expression::Regex(_) => {
+            ast::BareExpression::StringLiteral(_) | ast::BareExpression::Regex(_) => {
                 let terminal = self.terminals.get(expr).unwrap();
 
                 format!(
@@ -444,7 +444,7 @@ impl Generator {
                     alt
                 )
             }
-            ast::Expression::Alternatives(list) => {
+            ast::BareExpression::Alternatives(list) => {
                 let mut iter = list.iter().enumerate();
 
                 let (_, first) = iter.next().unwrap();
@@ -461,7 +461,7 @@ impl Generator {
 
                 res
             }
-            ast::Expression::Definition(rule_no) => {
+            ast::BareExpression::Definition(rule_no) => {
                 if let Some(rule) = rule {
                     format!(
                         r#"self.rule_{}(pos, input)
@@ -482,7 +482,7 @@ impl Generator {
                     )
                 }
             }
-            ast::Expression::MemoDefinition(rule_no) => {
+            ast::BareExpression::MemoDefinition(rule_no) => {
                 format!(
                     r#"match self.rule_memo.get(&(pos, Rule::{})) {{
                     Some(e) => e.clone(),
@@ -491,20 +491,20 @@ impl Generator {
                     grammar.definitions[*rule_no].name
                 )
             }
-            ast::Expression::Optional(expr) => {
+            ast::BareExpression::Optional(expr) => {
                 format!(
                     r#"{}.or_else(|_| Ok(Node::new(Rule::Terminal, pos, pos, {})))"#,
                     self.emit_expr(expr, rule, alt, grammar),
                     alt,
                 )
             }
-            ast::Expression::MustMatch(expr) => {
+            ast::BareExpression::MustMatch(expr) => {
                 format!(
                     r#"{}.map(|mut node| {{ node.end = node.start; node }})"#,
                     self.emit_expr(expr, rule, alt, grammar)
                 )
             }
-            ast::Expression::MustNotMatch(expr) => {
+            ast::BareExpression::MustNotMatch(expr) => {
                 format!(
                     r#"match {} {{
                     Ok(_) => Err(pos),
@@ -515,7 +515,7 @@ impl Generator {
                     alt,
                 )
             }
-            ast::Expression::Any(expr) => {
+            ast::BareExpression::Any(expr) => {
                 format!(
                     r#"{{
                     let mut list = Vec::new();
@@ -544,7 +544,7 @@ impl Generator {
                     alt
                 )
             }
-            ast::Expression::More(expr) => {
+            ast::BareExpression::More(expr) => {
                 format!(
                     r#"{{
                     let mut list = Vec::new();
@@ -703,7 +703,7 @@ pub struct PEG {
         );
 
         for (expr, name) in &self.terminals {
-            if let ast::Expression::Regex(_) = expr {
+            if let ast::BareExpression::Regex(_) = &expr.expr {
                 res.push_str(&format!(
                     r#"
     regex_{}: Regex,"#,
@@ -724,7 +724,7 @@ impl PEG {
         );
 
         for (expr, name) in &self.terminals {
-            if let ast::Expression::Regex(r) = expr {
+            if let ast::BareExpression::Regex(r) = &expr.expr {
                 assert!(!r.starts_with('^'), "regex {} should not start with ^", r);
 
                 res.push_str(&format!(
@@ -795,7 +795,11 @@ impl PEG {
             }
         }
 
-        if self.builtins.contains_key(&ast::Expression::Whitespace) {
+        if self
+            .builtins
+            .iter()
+            .any(|(key, _)| key.expr == ast::BareExpression::Whitespace)
+        {
             res.push_str(
                 r#"
 
@@ -822,7 +826,11 @@ impl PEG {
             );
         }
 
-        if self.builtins.contains_key(&ast::Expression::EndOfInput) {
+        if self
+            .builtins
+            .iter()
+            .any(|(key, _)| key.expr == ast::BareExpression::EndOfInput)
+        {
             res.push_str(
                 r#"
 
@@ -837,7 +845,11 @@ impl PEG {
             );
         }
 
-        if self.builtins.contains_key(&ast::Expression::Dot) {
+        if self
+            .builtins
+            .iter()
+            .any(|(key, _)| key.expr == ast::BareExpression::Dot)
+        {
             res.push_str(
                 r#"
 
@@ -857,7 +869,11 @@ impl PEG {
             );
         }
 
-        if self.builtins.contains_key(&ast::Expression::XidIdentifier) {
+        if self
+            .builtins
+            .iter()
+            .any(|(key, _)| key.expr == ast::BareExpression::XidIdentifier)
+        {
             res.push_str(
                 r#"
 
@@ -921,8 +937,8 @@ impl PEG {
         );
 
         for (expr, name) in &self.terminals {
-            match expr {
-                ast::Expression::StringLiteral(s) if s.chars().count() == 1 => {
+            match &expr.expr {
+                ast::BareExpression::StringLiteral(s) if s.chars().count() == 1 => {
                     let ch = escape_char(s.chars().next().unwrap());
                     res.push_str(&format!(
                         r#"
@@ -938,7 +954,7 @@ impl PEG {
                         escape_string(s),
                     ));
                 }
-                ast::Expression::StringLiteral(s) => {
+                ast::BareExpression::StringLiteral(s) => {
                     let s = escape_string(s);
                     res.push_str(&format!(
                         r#"
@@ -952,7 +968,7 @@ impl PEG {
                         name, s, s
                     ));
                 }
-                ast::Expression::Regex(_) => {
+                ast::BareExpression::Regex(_) => {
                     res.push_str(&format!(
                         r#"
                 Terminal::{} => {{

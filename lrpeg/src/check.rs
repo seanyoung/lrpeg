@@ -38,27 +38,27 @@ pub fn check_grammar(grammar: &mut ast::Grammar) {
 
 // just check for references for now
 fn check_expr(expr: &ast::Expression, grammar: &ast::Grammar, used: &mut HashSet<usize>) {
-    match expr {
-        ast::Expression::MemoDefinition(no) | ast::Expression::Definition(no) => {
+    match &expr.expr {
+        ast::BareExpression::MemoDefinition(no) | ast::BareExpression::Definition(no) => {
             used.insert(*no);
         }
-        ast::Expression::List(list) | ast::Expression::Alternatives(list) => {
+        ast::BareExpression::List(list) | ast::BareExpression::Alternatives(list) => {
             for expr in list {
                 check_expr(expr, grammar, used);
             }
         }
-        ast::Expression::MustMatch(expr)
-        | ast::Expression::MustNotMatch(expr)
-        | ast::Expression::Optional(expr)
-        | ast::Expression::Any(expr)
-        | ast::Expression::More(expr) => {
+        ast::BareExpression::MustMatch(expr)
+        | ast::BareExpression::MustNotMatch(expr)
+        | ast::BareExpression::Optional(expr)
+        | ast::BareExpression::Any(expr)
+        | ast::BareExpression::More(expr) => {
             check_expr(expr.as_ref(), grammar, used);
         }
-        ast::Expression::Dot
-        | ast::Expression::Whitespace
-        | ast::Expression::EndOfInput
-        | ast::Expression::XidIdentifier
-        | ast::Expression::StringLiteral(_)
-        | ast::Expression::Regex(_) => (),
+        ast::BareExpression::Dot
+        | ast::BareExpression::Whitespace
+        | ast::BareExpression::EndOfInput
+        | ast::BareExpression::XidIdentifier
+        | ast::BareExpression::StringLiteral(_)
+        | ast::BareExpression::Regex(_) => (),
     }
 }
