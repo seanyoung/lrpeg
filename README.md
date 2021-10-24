@@ -24,7 +24,7 @@ Add lrpeg to your Cargo.toml in build-dependencies:
 
 ```
 [build-dependencies]
-lrpeg = "0"
+lrpeg = "0.4"
 
 [dependencies]
 regex = "1"
@@ -143,7 +143,7 @@ This example is available in [lrpeg-example](https://github.com/seanyoung/lrpeg/
 
 PEG grammars are a set of rules. In lrpeg, each rule must end with a ";". Parsing starts at the top rule.
 
-- Each rule must start with an identifier, followed by `<-` and then the terms and terminated by `;`
+- Each rule must start with an identifier, followed by `<-` and then the terms and terminated by an optional `;`
 - A term can be repeated with `*`, `+` or optional `?`.
 - The list of terms cannot be empty (but a term can be optional)
 - A text literal can be encoded in single or double quotes ("foo" or 'bar')
@@ -158,6 +158,6 @@ The file `src/peg.peg` contains the grammar for the peg itself. To generate the 
 ## TODO
 
 - More tests
-- Better parse error information (now only the error offset is returned)
+- Better parse error information (now only the line and column is returned)
 - Better documentation
 - Detect unreachable alternatives
