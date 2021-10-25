@@ -1,12 +1,15 @@
 calculator <- expr EOI;
 
-expr <- expr ("+" / "-") WHITESPACE term
+expr <-
+    expr:/ expr ("+" / "-") WHITESPACE term
     / term;
 
-term <- term ("*" / "/" / "%") WHITESPACE  factor
+term <-
+    term:/ term ("*" / "/" / "%") WHITESPACE  factor
     / factor;
 
-factor <- "(" WHITESPACE  expr ")" WHITESPACE
+factor <-
+    factor:/ "(" WHITESPACE  expr ")" WHITESPACE
     / num;
 
 num <- re#[0-9]+# WHITESPACE;

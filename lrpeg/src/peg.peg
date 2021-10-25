@@ -2,28 +2,31 @@ grammar <- ws definition+ EOI;
 
 definition <- XID_IDENTIFIER ws "<-" ws expression ";"? ws;
 
-expression <- sequence (sequence_marker ws sequence)*
-        / (sequence_marker ws sequence)+;
+expression <-
+        unlabeled:/ sequence (sequence_marker ws sequence)*
+        labeled:/ (sequence_marker ws sequence)+;
 
 sequence <- alternative+;
 
 sequence_marker <- "/"
         / XID_IDENTIFIER ":/";
 
-alternative <- "<" alternative ">"
-        / "<" XID_IDENTIFIER ":" alternative ">"
-        / alternative "?" ws
-        / alternative "*" ws
-        / alternative "+" ws
-        / "(" ws expression ")" ws
-        / primary ws;
+alternative <-
+        pub:/ "<" alternative ">" ws
+        rename_pub:/ "<" XID_IDENTIFIER ":" alternative ">" ws
+        optional:/ alternative "?" ws
+        any:/ alternative "*" ws
+        more:/ alternative "+" ws
+        parenthesis:/ "(" ws expression ")" ws
+        primary:/ primary ws;
 
-primary <- "&" ws primary
-        / "!" ws primary
-        / regex ws
-        / XID_IDENTIFIER ws !"<-" !":/"
-        / string_literal ws
-        / "." ws;
+primary <-
+        must:/ "&" ws primary
+        must_not:/ "!" ws primary
+        regex:/ regex ws
+        id:/ XID_IDENTIFIER ws !"<-" !":/"
+        literal:/ string_literal ws
+        dot:/ "." ws;
 
 string_literal <- re#"([^"\\]|\\.)*"#
         /  re#'([^'\\]|\\.)*'#;

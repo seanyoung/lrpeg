@@ -22,7 +22,7 @@ fn main() {
                 match node.rule {
                     Rule::num => str::parse(node.children[0].as_str(input)).unwrap(),
                     Rule::expr => {
-                        if node.alternative == Some(0) {
+                        if node.alternative == Some("expr") {
                             let left = walk(&node.children[0], input);
                             let right = walk(&node.children[3], input);
 
@@ -36,7 +36,7 @@ fn main() {
                         }
                     }
                     Rule::term => {
-                        if node.alternative == Some(0) {
+                        if node.alternative == Some("term") {
                             let left = walk(&node.children[0], input);
                             let right = walk(&node.children[3], input);
 
@@ -51,7 +51,7 @@ fn main() {
                         }
                     }
                     Rule::factor => {
-                        if node.alternative == Some(0) {
+                        if node.alternative == Some("factor") {
                             walk(&node.children[2], input)
                         } else {
                             walk(&node.children[0], input)

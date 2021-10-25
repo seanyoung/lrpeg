@@ -92,36 +92,36 @@ fn collect_alternative(node: &peg::Node, grammar: &ast::Grammar, src: &str) -> a
     assert_eq!(node.rule, peg::Rule::alternative);
 
     match node.alternative {
-        Some(0) => {
+        Some("pub") => {
             let mut expr = collect_alternative(&node.children[1], grammar, src);
-            expr.label = Some(String::from(""));
+            expr.label = Some(node.children[1].as_str(src).to_string());
             expr
         }
-        Some(1) => {
+        Some("rename_pub") => {
             let mut expr = collect_alternative(&node.children[3], grammar, src);
-            expr.label = Some(node.children[0].as_str(src).to_string());
+            expr.label = Some(node.children[1].as_str(src).to_string());
             expr
         }
-        Some(2) => ast::BareExpression::Optional(Box::new(collect_alternative(
+        Some("optional") => ast::BareExpression::Optional(Box::new(collect_alternative(
             &node.children[0],
             grammar,
             src,
         )))
         .into(),
-        Some(3) => ast::BareExpression::Any(Box::new(collect_alternative(
+        Some("any") => ast::BareExpression::Any(Box::new(collect_alternative(
             &node.children[0],
             grammar,
             src,
         )))
         .into(),
-        Some(4) => ast::BareExpression::More(Box::new(collect_alternative(
+        Some("more") => ast::BareExpression::More(Box::new(collect_alternative(
             &node.children[0],
             grammar,
             src,
         )))
         .into(),
-        Some(5) => collect_expr(&node.children[2], grammar, src),
-        Some(6) => collect_primary(&node.children[0], grammar, src),
+        Some("parenthesis") => collect_expr(&node.children[2], grammar, src),
+        Some("primary") => collect_primary(&node.children[0], grammar, src),
         _ => unreachable!(),
     }
 }
@@ -130,20 +130,22 @@ fn collect_primary(node: &peg::Node, grammar: &ast::Grammar, src: &str) -> ast::
     assert_eq!(node.rule, peg::Rule::primary);
 
     match node.alternative {
-        Some(0) => ast::BareExpression::MustMatch(Box::new(collect_primary(
+        Some("must") => ast::BareExpression::MustMatch(Box::new(collect_primary(
             &node.children[2],
             grammar,
             src,
         )))
         .into(),
-        Some(1) => ast::BareExpression::MustNotMatch(Box::new(collect_primary(
+        Some("must_not") => ast::BareExpression::MustNotMatch(Box::new(collect_primary(
             &node.children[2],
             grammar,
             src,
         )))
         .into(),
-        Some(2) => ast::BareExpression::Regex(unquote(&node.children[0].as_str(src)[2..])).into(),
-        Some(3) => match node.children[0].as_str(src) {
+        Some("regex") => {
+            ast::BareExpression::Regex(unquote(&node.children[0].as_str(src)[2..])).into()
+        }
+        Some("id") => match node.children[0].as_str(src) {
             "EOI" => ast::BareExpression::EndOfInput.into(),
             "WHITESPACE" => ast::BareExpression::Whitespace.into(),
             "XID_IDENTIFIER" => ast::BareExpression::XidIdentifier.into(),
@@ -155,8 +157,10 @@ fn collect_primary(node: &peg::Node, grammar: &ast::Grammar, src: &str) -> ast::
                 }
             }
         },
-        Some(4) => ast::BareExpression::StringLiteral(unquote(node.children[0].as_str(src))).into(),
-        Some(5) => ast::BareExpression::Dot.into(),
+        Some("literal") => {
+            ast::BareExpression::StringLiteral(unquote(node.children[0].as_str(src))).into()
+        }
+        Some("dot") => ast::BareExpression::Dot.into(),
         _ => unreachable!(),
     }
 }
@@ -178,8 +182,8 @@ fn collect_alternatives<'a>(
             assert_eq!(node.children[0].rule, peg::Rule::sequence_marker);
             assert_eq!(node.children[2].rule, peg::Rule::sequence);
 
-            let label = if node.alternative == Some(1) {
-                Some(node.children[0].as_str(src).to_string())
+            let label = if node.children[0].children.len() == 2 {
+                Some(node.children[0].children[0].as_str(src).to_string())
             } else {
                 None
             };
@@ -188,7 +192,7 @@ fn collect_alternatives<'a>(
         }
     }
 
-    if node.alternative == Some(0) {
+    if node.alternative == Some("unlabeled") {
         alternatives.push((None, &node.children[0]));
         assert_eq!(node.children[1].rule, peg::Rule::Any);
         collect_alternatives(&node.children[1], &mut alternatives, src);

@@ -30,7 +30,7 @@ fn test2() {
             .parse("barf darf")
             .unwrap()
             .print_to_string("barf darf"),
-        "(foo, alt=0, \"barf darf\", (Terminal, \"barf\"), (Terminal, \" \"), (Terminal, \"darf\"))"
+        "(foo, \"barf darf\", (Terminal, \"barf\"), (Terminal, \" \"), (Terminal, \"darf\"))"
     );
 
     assert!(p.parse("berf").is_err());
@@ -41,7 +41,7 @@ fn test2() {
             .parse("carf erf")
             .unwrap()
             .print_to_string("carf erf"),
-        "(foo, alt=1, \"carf erf\", (carf, \"carf erf\", (Terminal, \"carf\"), (Dot, \" \"), (erf, \"erf\")))"
+        "(foo, \"carf erf\", (carf, \"carf erf\", (Terminal, \"carf\"), (Dot, \" \"), (erf, \"erf\")))"
     );
 
     assert!(p.parse("carf erf").is_ok());
@@ -78,34 +78,34 @@ fn calculator() {
 
     assert_eq!(
         parse("1+2*4"),
-        "(expr, alt=0, \"1+2*4\", (expr, alt=2, \"1\", (term, alt=3, \"1\", (power, alt=1, \"1\", (num, \"1\")))), (Terminal, \"+\"), (term, alt=0, \"2*4\", (term, alt=3, \"2\", (power, alt=1, \"2\", (num, \"2\"))), (Terminal, \"*\"), (power, alt=1, \"4\", (num, \"4\"))))"
+        "(expr, \"1+2*4\", (expr, \"1\", (term, \"1\", (power, \"1\", (num, \"1\")))), (Terminal, \"+\"), (term, \"2*4\", (term, \"2\", (power, \"2\", (num, \"2\"))), (Terminal, \"*\"), (power, \"4\", (num, \"4\"))))"
     );
 
     assert_eq!(
         parse("1"),
-        "(expr, alt=2, \"1\", (term, alt=3, \"1\", (power, alt=1, \"1\", (num, \"1\"))))"
+        "(expr, \"1\", (term, \"1\", (power, \"1\", (num, \"1\"))))"
     );
     assert_eq!(
         parse("1+1"),
-        "(expr, alt=0, \"1+1\", (expr, alt=2, \"1\", (term, alt=3, \"1\", (power, alt=1, \"1\", (num, \"1\")))), (Terminal, \"+\"), (term, alt=3, \"1\", (power, alt=1, \"1\", (num, \"1\"))))"
+        "(expr, \"1+1\", (expr, \"1\", (term, \"1\", (power, \"1\", (num, \"1\")))), (Terminal, \"+\"), (term, \"1\", (power, \"1\", (num, \"1\"))))"
     );
     assert_eq!(
         parse("(1+2)*4"),
-        "(expr, alt=2, \"(1+2)*4\", (term, alt=0, \"(1+2)*4\", (term, alt=2, \"(1+2)\", (Terminal, \"(\"), (expr, alt=0, \"1+2\", (expr, alt=2, \"1\", (term, alt=3, \"1\", (power, alt=1, \"1\", (num, \"1\")))), (Terminal, \"+\"), (term, alt=3, \"2\", (power, alt=1, \"2\", (num, \"2\")))), (Terminal, \")\")), (Terminal, \"*\"), (power, alt=1, \"4\", (num, \"4\"))))"
+        "(expr, \"(1+2)*4\", (term, \"(1+2)*4\", (term, \"(1+2)\", (Terminal, \"(\"), (expr, \"1+2\", (expr, \"1\", (term, \"1\", (power, \"1\", (num, \"1\")))), (Terminal, \"+\"), (term, \"2\", (power, \"2\", (num, \"2\")))), (Terminal, \")\")), (Terminal, \"*\"), (power, \"4\", (num, \"4\"))))"
     );
     assert_eq!(
         parse("1*(1+1"),
-        "(expr, alt=2, \"1\", (term, alt=3, \"1\", (power, alt=1, \"1\", (num, \"1\"))))"
+        "(expr, \"1\", (term, \"1\", (power, \"1\", (num, \"1\"))))"
     );
 
     assert_eq!(
         parse("3^5^7"),
-        "(expr, alt=2, \"3^5^7\", (term, alt=3, \"3^5^7\", (power, alt=0, \"3^5^7\", (num, \"3\"), (Terminal, \"^\"), (power, alt=0, \"5^7\", (num, \"5\"), (Terminal, \"^\"), (power, alt=1, \"7\", (num, \"7\"))))))"
+        "(expr, \"3^5^7\", (term, \"3^5^7\", (power, \"3^5^7\", (num, \"3\"), (Terminal, \"^\"), (power, \"5^7\", (num, \"5\"), (Terminal, \"^\"), (power, \"7\", (num, \"7\"))))))"
     );
 
     assert_eq!(
         parse("3*5*7"),
-        "(expr, alt=2, \"3*5*7\", (term, alt=0, \"3*5*7\", (term, alt=0, \"3*5\", (term, alt=3, \"3\", (power, alt=1, \"3\", (num, \"3\"))), (Terminal, \"*\"), (power, alt=1, \"5\", (num, \"5\"))), (Terminal, \"*\"), (power, alt=1, \"7\", (num, \"7\"))))"
+        "(expr, \"3*5*7\", (term, \"3*5*7\", (term, \"3*5\", (term, \"3\", (power, \"3\", (num, \"3\"))), (Terminal, \"*\"), (power, \"5\", (num, \"5\"))), (Terminal, \"*\"), (power, \"7\", (num, \"7\"))))"
     );
 }
 
@@ -117,41 +117,41 @@ fn repeat() {
 
     assert_eq!(
         parse("abc"),
-        "(foo, alt=0, \"abc\", (Terminal, \"a\"), (Terminal, \"b\"), (Terminal, \"c\"))"
+        "(foo, \"abc\", (Terminal, \"a\"), (Terminal, \"b\"), (Terminal, \"c\"))"
     );
     assert_eq!(
         parse("ac"),
-        "(foo, alt=0, \"ac\", (Terminal, \"a\"), (Terminal, \"\"), (Terminal, \"c\"))"
+        "(foo, \"ac\", (Terminal, \"a\"), (Terminal, \"\"), (Terminal, \"c\"))"
     );
 
     assert_eq!(
         parse("xyyyyz"),
-        "(foo, alt=1, \"xyyyyz\", (Terminal, \"x\"), (Any, \"yyyy\", (Terminal, \"y\"), (Terminal, \"y\"), (Terminal, \"y\"), (Terminal, \"y\")), (Terminal, \"z\"))"
+        "(foo, \"xyyyyz\", (Terminal, \"x\"), (Any, \"yyyy\", (Terminal, \"y\"), (Terminal, \"y\"), (Terminal, \"y\"), (Terminal, \"y\")), (Terminal, \"z\"))"
     );
 
     assert_eq!(
         parse("xz"),
-        "(foo, alt=1, \"xz\", (Terminal, \"x\"), (Any, \"\"), (Terminal, \"z\"))"
+        "(foo, \"xz\", (Terminal, \"x\"), (Any, \"\"), (Terminal, \"z\"))"
     );
 
     assert_eq!(
         parse("def"),
-        "(foo, alt=2, \"def\", (Terminal, \"d\"), (More, \"e\", (Terminal, \"e\")), (Terminal, \"f\"))"
+        "(foo, \"def\", (Terminal, \"d\"), (More, \"e\", (Terminal, \"e\")), (Terminal, \"f\"))"
     );
 
     assert_eq!(
         parse("deeeef"),
-        "(foo, alt=2, \"deeeef\", (Terminal, \"d\"), (More, \"eeee\", (Terminal, \"e\"), (Terminal, \"e\"), (Terminal, \"e\"), (Terminal, \"e\")), (Terminal, \"f\"))"
+        "(foo, \"deeeef\", (Terminal, \"d\"), (More, \"eeee\", (Terminal, \"e\"), (Terminal, \"e\"), (Terminal, \"e\"), (Terminal, \"e\")), (Terminal, \"f\"))"
     );
 
     assert_eq!(
         parse("kx"),
-        "(foo, alt=3, \"kx\", (Terminal, \"k\"), (MustNotMatch, \"\"), (Dot, \"x\"))"
+        "(foo, \"kx\", (Terminal, \"k\"), (MustNotMatch, \"\"), (Dot, \"x\"))"
     );
 
     assert_eq!(
         parse("qr"),
-        "(foo, alt=4, \"qr\", (Terminal, \"q\"), (Terminal, \"\"), (Dot, \"r\"))"
+        "(foo, \"qr\", (Terminal, \"q\"), (Terminal, \"\"), (Dot, \"r\"))"
     );
 
     assert_eq!(p.parse("qs").unwrap_err(), (1, 1));
@@ -177,6 +177,7 @@ fn parse_lang(input: &str) -> Vec<usize> {
     match parser.parse(input) {
         Ok(node) => {
             for line_node in collect_rules(&node.children[0], lang::Rule::lines) {
+                assert_eq!(line_node.children[0].label, Some("id"));
                 // do we have a keyword
                 if !line_node.children[1].is_empty() {
                     let s = line_node.children[0].as_str(input).replace("\t", "    ");

@@ -196,7 +196,7 @@ impl Generator {
             def.name, def.name,
         );
 
-        res.push_str(&self.emit_expr(&def.sequence, Some(&def.name), "None", grammar));
+        res.push_str(&self.emit_expr(&def.sequence, Some(&def.name), &None, grammar));
 
         res.push_str(
             r#";
@@ -265,7 +265,7 @@ impl Generator {
             res.push_str(&self.emit_expr(
                 &ast::BareExpression::Alternatives(list).into(),
                 Some(&def.name),
-                "None",
+                &None,
                 grammar,
             ));
         } else {
@@ -278,7 +278,7 @@ impl Generator {
         loop {
             let r = "#,
             );
-            res.push_str(&self.emit_expr(&def.sequence, Some(&def.name), "None", grammar));
+            res.push_str(&self.emit_expr(&def.sequence, Some(&def.name), &None, grammar));
         }
 
         res.push_str(
@@ -309,14 +309,14 @@ impl Generator {
         &self,
         expr: &ast::Expression,
         rule: Option<&str>,
-        alt: &str,
+        alt: &Option<String>,
         grammar: &ast::Grammar,
     ) -> String {
         match &expr.expr {
             ast::BareExpression::List(list) => {
                 let mut iter = list.iter();
 
-                let first = iter.next().unwrap();
+                let mut last = iter.next().unwrap();
 
                 let mut res = format!(
                     r#"{{
@@ -324,23 +324,63 @@ impl Generator {
             let start = pos;
 
             {}"#,
-                    self.emit_expr(first, None, "None", grammar)
+                    self.emit_expr(last, None, &None, grammar)
                 );
 
                 for expr in iter {
-                    res.push_str(&format!(
-                        r#"
+                    if last.label.is_some() {
+                        res.push_str(&format!(
+                            r#"
+            .and_then(|mut node| {{
+                let pos = node.end;
+                node.label = {};
+                list.push(node);
+                {}
+            }})"#,
+                            option_stringify(&last.label),
+                            self.emit_expr(expr, None, &None, grammar),
+                        ))
+                    } else {
+                        res.push_str(&format!(
+                            r#"
             .and_then(|node| {{
                 let pos = node.end;
                 list.push(node);
                 {}
             }})"#,
-                        self.emit_expr(expr, None, "None", grammar),
-                    ));
+                            self.emit_expr(expr, None, &None, grammar),
+                        ))
+                    };
+
+                    last = expr;
                 }
 
-                res.push_str(&format!(
-                    r#"
+                if last.label.is_some() {
+                    res.push_str(&format!(
+                        r#"
+            .map(|mut node| {{
+                let end = node.end;
+                node.label = {};
+                list.push(node);
+
+                Node {{
+                    rule: Rule::{},
+                    start,
+                    end,
+                    children: list,
+                    label: {},
+                    alternative: {},
+                }}
+            }})
+        }}"#,
+                        option_stringify(&last.label),
+                        rule.unwrap_or("List"),
+                        option_stringify(&expr.label),
+                        option_stringify(alt),
+                    ));
+                } else {
+                    res.push_str(&format!(
+                        r#"
             .map(|node| {{
                 let end = node.end;
                 list.push(node);
@@ -350,32 +390,42 @@ impl Generator {
                     start,
                     end,
                     children: list,
+                    label: {},
                     alternative: {},
                 }}
             }})
         }}"#,
-                    rule.unwrap_or("List"),
-                    alt,
-                ));
+                        rule.unwrap_or("List"),
+                        option_stringify(&expr.label),
+                        option_stringify(alt),
+                    ));
+                }
 
                 res
             }
             ast::BareExpression::Whitespace => {
                 if let Some(rule) = rule {
                     format!(
-                        r#"self.builtin_whitespace(pos, input, None)
+                        r#"self.builtin_whitespace(pos, input, None, None)
                         .map(|node| {{ Node {{
                             rule: Rule::{},
                             start: node.start,
                             end: node.end,
                             children: vec![node],
+                            label: {},
                             alternative: {},
                         }}
                     }})"#,
-                        rule, alt
+                        rule,
+                        option_stringify(&expr.label),
+                        option_stringify(alt),
                     )
                 } else {
-                    format!(r#"self.builtin_whitespace(pos, input, {})"#, alt)
+                    format!(
+                        r#"self.builtin_whitespace(pos, input, {}, {})"#,
+                        option_stringify(&expr.label),
+                        option_stringify(alt),
+                    )
                 }
             }
             ast::BareExpression::EndOfInput => {
@@ -387,49 +437,70 @@ impl Generator {
                             start: node.start,
                             end: node.end,
                             children: vec![node],
+                            label: {},
                             alternative: {},
                         }}
                     }})"#,
-                        rule, alt
+                        rule,
+                        option_stringify(&expr.label),
+                        option_stringify(alt),
                     )
                 } else {
-                    format!(r#"self.builtin_eoi(pos, input, {})"#, alt)
+                    format!(
+                        r#"self.builtin_eoi(pos, input, {}, {})"#,
+                        option_stringify(&expr.label),
+                        option_stringify(alt),
+                    )
                 }
             }
             ast::BareExpression::Dot => {
                 if let Some(rule) = rule {
                     format!(
-                        r#"self.builtin_dot(pos, input, None)
+                        r#"self.builtin_dot(pos, input, None, None)
                         .map(|node| {{ Node {{
                             rule: Rule::{},
                             start: node.start,
                             end: node.end,
                             children: vec![node],
+                            label: {},
                             alternative: {},
                         }}
                     }})"#,
-                        rule, alt
+                        rule,
+                        option_stringify(&expr.label),
+                        option_stringify(alt),
                     )
                 } else {
-                    format!(r#"self.builtin_dot(pos, input, {})"#, alt)
+                    format!(
+                        r#"self.builtin_dot(pos, input, {}, {})"#,
+                        option_stringify(&expr.label),
+                        option_stringify(alt),
+                    )
                 }
             }
             ast::BareExpression::XidIdentifier => {
                 if let Some(rule) = rule {
                     format!(
-                        r#"self.builtin_xid_identifier(pos, input, None)
+                        r#"self.builtin_xid_identifier(pos, input, None, None)
                         .map(|node| {{ Node {{
                             rule: Rule::{},
                             start: node.start,
                             end: node.end,
                             children: vec![node],
+                            label: {},
                             alternative: {},
                         }}
                     }})"#,
-                        rule, alt
+                        rule,
+                        option_stringify(&expr.label),
+                        option_stringify(alt),
                     )
                 } else {
-                    format!(r#"self.builtin_xid_identifier(pos, input, {})"#, alt)
+                    format!(
+                        r#"self.builtin_xid_identifier(pos, input, {}, {})"#,
+                        option_stringify(&expr.label),
+                        option_stringify(alt),
+                    )
                 }
             }
             ast::BareExpression::StringLiteral(_) | ast::BareExpression::Regex(_) => {
@@ -437,25 +508,26 @@ impl Generator {
 
                 format!(
                     r#"self.match_terminal(pos, input, Terminal::{})
-                    .map(|end| Node::new(Rule::{}, pos, end, {}))
+                    .map(|end| Node::new(Rule::{}, pos, end, {}, {}))
                     .ok_or(pos)"#,
                     terminal,
                     rule.unwrap_or("Terminal"),
-                    alt
+                    option_stringify(&expr.label),
+                    option_stringify(alt),
                 )
             }
             ast::BareExpression::Alternatives(list) => {
-                let mut iter = list.iter().enumerate();
+                let mut iter = list.iter();
 
-                let (_, first) = iter.next().unwrap();
+                let first = iter.next().unwrap();
 
-                let mut res = self.emit_expr(first, rule, "Some(0)", grammar);
+                let mut res = self.emit_expr(first, rule, &first.alt, grammar);
 
-                for (alt, expr) in iter {
+                for expr in iter {
                     res.push_str(&format!(
                         r#"
             .or_else(|_| {})"#,
-                        self.emit_expr(expr, rule, &format!("Some({})", alt), grammar),
+                        self.emit_expr(expr, rule, &expr.alt, grammar),
                     ));
                 }
 
@@ -470,10 +542,14 @@ impl Generator {
                             start: node.start,
                             end: node.end,
                             children: vec![node],
+                            label: {},
                             alternative: {},
                         }}
                     }})"#,
-                        grammar.definitions[*rule_no].name, rule, alt
+                        grammar.definitions[*rule_no].name,
+                        rule,
+                        option_stringify(&expr.label),
+                        option_stringify(alt),
                     )
                 } else {
                     format!(
@@ -493,9 +569,10 @@ impl Generator {
             }
             ast::BareExpression::Optional(expr) => {
                 format!(
-                    r#"{}.or_else(|_| Ok(Node::new(Rule::Terminal, pos, pos, {})))"#,
+                    r#"{}.or_else(|_| Ok(Node::new(Rule::Terminal, pos, pos, {}, {})))"#,
                     self.emit_expr(expr, rule, alt, grammar),
-                    alt,
+                    option_stringify(&expr.label),
+                    option_stringify(alt),
                 )
             }
             ast::BareExpression::MustMatch(expr) => {
@@ -508,11 +585,12 @@ impl Generator {
                 format!(
                     r#"match {} {{
                     Ok(_) => Err(pos),
-                    Err(_) => Ok(Node::new(Rule::{}, pos, pos, {})),
+                    Err(_) => Ok(Node::new(Rule::{}, pos, pos, {}, {})),
                 }}"#,
-                    self.emit_expr(expr, rule, "None", grammar),
+                    self.emit_expr(expr, rule, &None, grammar),
                     rule.unwrap_or("MustNotMatch"),
-                    alt,
+                    option_stringify(&expr.label),
+                    option_stringify(alt),
                 )
             }
             ast::BareExpression::Any(expr) => {
@@ -536,12 +614,14 @@ impl Generator {
                         start,
                         end: pos,
                         children: list,
+                        label: {},
                         alternative: {},
                     }})
                 }}"#,
-                    self.emit_expr(expr, rule, "None", grammar),
+                    self.emit_expr(expr, rule, &None, grammar),
                     rule.unwrap_or("Any"),
-                    alt
+                    option_stringify(&expr.label),
+                    option_stringify(alt),
                 )
             }
             ast::BareExpression::More(expr) => {
@@ -568,13 +648,15 @@ impl Generator {
                             start,
                             end: pos,
                             children: list,
+                            label: {},
                             alternative: {},
                         }})
                     }}
                 }}"#,
-                    self.emit_expr(expr, rule, "None", grammar),
+                    self.emit_expr(expr, rule, &None, grammar),
                     rule.unwrap_or("More"),
-                    alt,
+                    option_stringify(&expr.label),
+                    option_stringify(alt),
                 )
             }
         }
@@ -595,16 +677,18 @@ pub struct Node {
     pub start: usize,
     pub end: usize,
     pub children: Vec<Node>,
-    pub alternative: Option<u16>
+    pub label: Option<&'static str>,
+    pub alternative: Option<&'static str>,
 }
 
 impl Node {
-    fn new(rule: Rule, start: usize, end: usize, alternative: Option<u16>) -> Self {
+    fn new(rule: Rule, start: usize, end: usize, label: Option<&'static str>, alternative: Option<&'static str>) -> Self {
         Self {
             rule,
             start,
             end,
             children: Vec::new(),
+            label,
             alternative,
         }
     }
@@ -803,7 +887,7 @@ impl PEG {
             res.push_str(
                 r#"
 
-    fn builtin_whitespace(&self, pos: usize, input: &str, alt: Option<u16>) -> Result<Node, usize> {
+    fn builtin_whitespace(&self, pos: usize, input: &str, label: Option<&'static str>, alternative: Option<&'static str>) -> Result<Node, usize> {
         // TODO: is this worth caching?
         let mut chars = input[pos..].char_indices();
         let mut next_pos;
@@ -821,7 +905,7 @@ impl PEG {
             }
         }
 
-        Ok(Node::new(Rule::WHITESPACE, pos, next_pos, alt))
+        Ok(Node::new(Rule::WHITESPACE, pos, next_pos, label, alternative))
     }"#,
             );
         }
@@ -834,10 +918,10 @@ impl PEG {
             res.push_str(
                 r#"
 
-    fn builtin_eoi(&self, pos: usize, input: &str, alt: Option<u16>) -> Result<Node, usize> {
+    fn builtin_eoi(&self, pos: usize, input: &str, label: Option<&'static str>, alternative: Option<&'static str>) -> Result<Node, usize> {
         // not worth caching
         if pos == input.len() {
-            Ok(Node::new(Rule::EOI, pos, pos, alt))
+            Ok(Node::new(Rule::EOI, pos, pos, label, alternative))
         } else {
             Err(pos)
         }
@@ -853,14 +937,14 @@ impl PEG {
             res.push_str(
                 r#"
 
-    fn builtin_dot(&self, pos: usize, input: &str, alt: Option<u16>) -> Result<Node, usize> {
+    fn builtin_dot(&self, pos: usize, input: &str, label: Option<&'static str>, alternative: Option<&'static str>) -> Result<Node, usize> {
         // not worth caching
         let mut chars = input[pos..].char_indices();
         if chars.next().is_some() {
             if let Some((len, _)) = chars.next() {
-                Ok(Node::new(Rule::Dot, pos, pos + len, alt))
+                Ok(Node::new(Rule::Dot, pos, pos + len, label, alternative))
             } else {
-                Ok(Node::new(Rule::Dot, pos, input.len(), alt))
+                Ok(Node::new(Rule::Dot, pos, input.len(), label, alternative))
             }
         } else {
             Err(pos)
@@ -877,13 +961,14 @@ impl PEG {
             res.push_str(
                 r#"
 
-    fn builtin_xid_identifier(&mut self, pos: usize, input: &str, alt: Option<u16>) -> Result<Node, usize> {
+    fn builtin_xid_identifier(&mut self, pos: usize, input: &str, label: Option<&'static str>, alternative: Option<&'static str>) -> Result<Node, usize> {
         let key = (pos, Rule::XID_IDENTIFIER);
 
         if let Some(res) = self.rule_memo.get(&key) {{
             let mut res = res.clone();
             if let Ok(res) = &mut res {
-                res.alternative = alt;
+                res.label = label;
+                res.alternative = alternative;
             }
             return res;
         }}
@@ -901,7 +986,7 @@ impl PEG {
                     }
                 } {}
 
-                Ok(Node::new(Rule::XID_IDENTIFIER, pos, end, alt))
+                Ok(Node::new(Rule::XID_IDENTIFIER, pos, end, label, alternative))
             } else {
                 Err(pos)
             }
@@ -912,7 +997,8 @@ impl PEG {
         self.rule_memo.insert(key, res.clone());
 
         if let Ok(res) = &mut res {
-            res.alternative = alt;
+            res.label = label;
+            res.alternative = alternative;
         }
 
         res
@@ -999,6 +1085,13 @@ impl PEG {
         );
 
         res
+    }
+}
+
+fn option_stringify(o: &Option<String>) -> String {
+    match o {
+        None => String::from("None"),
+        Some(s) => format!(r#"Some("{}")"#, s),
     }
 }
 
