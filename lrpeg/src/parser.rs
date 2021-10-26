@@ -94,7 +94,13 @@ fn collect_alternative(node: &peg::Node, grammar: &ast::Grammar, src: &str) -> a
     match node.alternative {
         Some("pub") => {
             let mut expr = collect_alternative(&node.children[1], grammar, src);
-            expr.label = Some(node.children[1].as_str(src).to_string());
+            expr.label = Some(
+                node.children[1]
+                    .as_str(src)
+                    .chars()
+                    .filter(|ch| ch.is_alphanumeric())
+                    .collect(),
+            );
             expr
         }
         Some("rename_pub") => {

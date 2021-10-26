@@ -12,11 +12,11 @@ sequence_marker <- "/"
         / XID_IDENTIFIER ":/";
 
 alternative <-
-        pub:/ "<" alternative ">" ws
-        rename_pub:/ "<" XID_IDENTIFIER ":" alternative ">" ws
         optional:/ alternative "?" ws
         any:/ alternative "*" ws
         more:/ alternative "+" ws
+        pub:/ "<" alternative ">" ws
+        rename_pub:/ "<" XID_IDENTIFIER ":" alternative ">" ws
         parenthesis:/ "(" ws expression ")" ws
         primary:/ primary ws;
 
