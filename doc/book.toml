@@ -1,0 +1,6 @@
+[book]
+authors = ["Sean Young <sean@mess.org>"]
+language = "en"
+multilingual = false
+src = "src"
+title = "lrpeg parser generator"
