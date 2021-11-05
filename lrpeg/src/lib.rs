@@ -5,18 +5,20 @@ use std::path::Path;
 use unicode_xid::UnicodeXID;
 
 pub mod ast;
+mod builtin;
 mod check;
 pub mod parser;
 mod utils;
 
+use self::builtin::push_builtins;
 use utils::{escape_char, escape_string, KEYWORDS};
 
 /// Generate a parser module for the peg described in source. The result is
 /// a rust module as String.
-pub fn build_parser(source: &str, modname: &str) -> String {
+pub fn build_parser(source: &str, mod_name: &str) -> String {
     let mut gen = Generator::new();
 
-    gen.build(source, modname)
+    gen.build(source, mod_name)
 }
 
 pub struct Generator {
@@ -62,8 +64,10 @@ impl Generator {
         for rule in &grammar.definitions {
             self.collect_terminals_recursive(&rule.sequence);
         }
-
-        self.emit(&grammar, mod_name)
+        let mut res = format!("mod {} {{", mod_name);
+        self.emit(&grammar, &mut res);
+        res.push_str("\n}");
+        return res;
     }
 }
 
@@ -667,8 +671,7 @@ impl Generator {
         }
     }
 
-    fn emit(&self, grammar: &ast::Grammar, mod_name: &str) -> String {
-        let mut res = format!("mod {} {{", mod_name);
+    fn emit(&self, grammar: &ast::Grammar, res: &mut String) {
         res.push_str(
             r#"
 #![allow(unused_imports, dead_code, clippy::all)]
@@ -884,132 +887,7 @@ impl PEG {
             }
         }
 
-        if self
-            .builtins
-            .iter()
-            .any(|(key, _)| key.expr == ast::BareExpression::Whitespace)
-        {
-            res.push_str(
-                r#"
-
-    fn builtin_whitespace(&self, pos: usize, input: &str, label: Option<&'static str>, alternative: Option<&'static str>) -> Result<Node, usize> {
-        // TODO: is this worth caching?
-        let mut chars = input[pos..].char_indices();
-        let mut next_pos;
-
-        loop {
-            if let Some((off, ch)) = chars.next() {
-                next_pos = pos + off;
-
-                if !ch.is_whitespace() {
-                    break;
-                }
-            } else {
-                next_pos = input.len();
-                break;
-            }
-        }
-
-        Ok(Node::new(Rule::WHITESPACE, pos, next_pos, label, alternative))
-    }"#,
-            );
-        }
-
-        if self
-            .builtins
-            .iter()
-            .any(|(key, _)| key.expr == ast::BareExpression::EndOfInput)
-        {
-            res.push_str(
-                r#"
-
-    fn builtin_eoi(&self, pos: usize, input: &str, label: Option<&'static str>, alternative: Option<&'static str>) -> Result<Node, usize> {
-        // not worth caching
-        if pos == input.len() {
-            Ok(Node::new(Rule::EOI, pos, pos, label, alternative))
-        } else {
-            Err(pos)
-        }
-    }"#,
-            );
-        }
-
-        if self
-            .builtins
-            .iter()
-            .any(|(key, _)| key.expr == ast::BareExpression::Dot)
-        {
-            res.push_str(
-                r#"
-
-    fn builtin_dot(&self, pos: usize, input: &str, label: Option<&'static str>, alternative: Option<&'static str>) -> Result<Node, usize> {
-        // not worth caching
-        let mut chars = input[pos..].char_indices();
-        if chars.next().is_some() {
-            if let Some((len, _)) = chars.next() {
-                Ok(Node::new(Rule::Dot, pos, pos + len, label, alternative))
-            } else {
-                Ok(Node::new(Rule::Dot, pos, input.len(), label, alternative))
-            }
-        } else {
-            Err(pos)
-        }
-    }"#,
-            );
-        }
-
-        if self
-            .builtins
-            .iter()
-            .any(|(key, _)| key.expr == ast::BareExpression::XidIdentifier)
-        {
-            res.push_str(
-                r#"
-
-    fn builtin_xid_identifier(&mut self, pos: usize, input: &str, label: Option<&'static str>, alternative: Option<&'static str>) -> Result<Node, usize> {
-        let key = (pos, Rule::XID_IDENTIFIER);
-
-        if let Some(res) = self.rule_memo.get(&key) {{
-            let mut res = res.clone();
-            if let Ok(res) = &mut res {
-                res.label = label;
-                res.alternative = alternative;
-            }
-            return res;
-        }}
-
-        let mut chars = input[pos..].char_indices();
-        let mut end = pos;
-        let mut res = if let Some((_, ch)) = chars.next() {
-            if UnicodeXID::is_xid_start(ch) || ch == '_' {
-                while {
-                    if let Some((off, ch)) = chars.next() {
-                        end = pos + off;
-                        UnicodeXID::is_xid_continue(ch)
-                    } else {
-                        false
-                    }
-                } {}
-
-                Ok(Node::new(Rule::XID_IDENTIFIER, pos, end, label, alternative))
-            } else {
-                Err(pos)
-            }
-        } else {
-            Err(pos)
-        };
-
-        self.rule_memo.insert(key, res.clone());
-
-        if let Ok(res) = &mut res {
-            res.label = label;
-            res.alternative = alternative;
-        }
-
-        res
-    }"#,
-            );
-        }
+        push_builtins(&self.builtins, res);
 
         res.push_str(
             r#"
@@ -1085,11 +963,8 @@ impl PEG {
         res
     }
 }
-}
 "#,
         );
-
-        res
     }
 }
 
