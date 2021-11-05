@@ -64,7 +64,11 @@ impl Generator {
         for rule in &grammar.definitions {
             self.collect_terminals_recursive(&rule.sequence);
         }
-        let mut res = format!("mod {} {{", mod_name);
+
+        let mut res = String::with_capacity(10000);
+        res.push_str("mod ");
+        res.push_str(mod_name);
+        res.push_str(" {");
         self.emit(&grammar, &mut res);
         res.push_str("\n}");
         return res;
@@ -112,7 +116,7 @@ impl Generator {
         res
     }
 
-    fn collect_terminals_recursive(&mut self, expr: &ast::Expression) {
+    pub fn collect_terminals_recursive(&mut self, expr: &ast::Expression) {
         match &expr.expr {
             ast::BareExpression::StringLiteral(s) => {
                 if !self.terminals.contains_key(expr) {
@@ -671,7 +675,7 @@ impl Generator {
         }
     }
 
-    fn emit(&self, grammar: &ast::Grammar, res: &mut String) {
+    pub fn emit(&self, grammar: &ast::Grammar, res: &mut String) {
         res.push_str(
             r#"
 #![allow(unused_imports, dead_code, clippy::all)]
