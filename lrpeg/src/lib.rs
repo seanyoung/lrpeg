@@ -19,7 +19,7 @@ pub fn build_parser(source: &str, modname: &str) -> String {
     gen.build(source, modname)
 }
 
-struct Generator {
+pub struct Generator {
     symbols: HashSet<String>,
     builtins: BTreeMap<ast::Expression, String>,
     terminals: BTreeMap<ast::Expression, String>,
@@ -32,20 +32,23 @@ impl Default for Generator {
 }
 
 impl Generator {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Generator {
             symbols: HashSet::new(),
             builtins: BTreeMap::new(),
             terminals: BTreeMap::new(),
         }
     }
+    pub fn insert_symbol(&mut self, s: impl Into<String>) -> bool {
+        self.symbols.insert(s.into())
+    }
 
-    fn build(&mut self, source: &str, modname: &str) -> String {
+    pub fn build(&mut self, source: &str, mod_name: &str) -> String {
         let mut grammar = parser::parse(source);
 
         check::check_grammar(&mut grammar);
 
-        // prepopulate builtins
+        // pre populate builtins
         self.symbols.insert(String::from("Dot"));
         self.symbols.insert(String::from("WHITESPACE"));
         self.symbols.insert(String::from("EOI"));
@@ -60,9 +63,11 @@ impl Generator {
             self.collect_terminals_recursive(&rule.sequence);
         }
 
-        self.emit(&grammar, modname)
+        self.emit(&grammar, mod_name)
     }
+}
 
+impl Generator {
     fn terminal_to_identifier(&mut self, s: &str, default: &str) -> String {
         let mut res = String::new();
 
@@ -662,8 +667,8 @@ impl Generator {
         }
     }
 
-    fn emit(&self, grammar: &ast::Grammar, modname: &str) -> String {
-        let mut res = format!("mod {} {{", modname);
+    fn emit(&self, grammar: &ast::Grammar, mod_name: &str) -> String {
+        let mut res = format!("mod {} {{", mod_name);
         res.push_str(
             r#"
 #![allow(unused_imports, dead_code, clippy::all)]

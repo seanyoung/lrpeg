@@ -1,2 +1,8 @@
+# IDE
+*.vs/
+.vscode/
+.idea/
+*.iml
+
 target
 Cargo.lock
