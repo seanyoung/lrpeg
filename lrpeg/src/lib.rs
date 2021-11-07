@@ -21,6 +21,7 @@ pub fn build_parser(source: &str, mod_name: &str) -> String {
     gen.build(source, mod_name)
 }
 
+#[derive(Debug)]
 pub struct Generator {
     symbols: HashSet<String>,
     builtins: BTreeMap<ast::Expression, String>,
