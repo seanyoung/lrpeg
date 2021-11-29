@@ -2,12 +2,12 @@
 name = "lrpeg-test"
 version = "0.1.0"
 authors = ["Sean Young <sean@mess.org>"]
-edition = "2018"
+edition = "2021"
 
 [build-dependencies]
 lrpeg = { path = "../lrpeg" }
 
 [dependencies]
 lrpeg = { path = "../lrpeg" }
-regex = "1"
-unicode-xid = "0.2"
+regex = "1.5.4"
+unicode-xid = "0.2.2"

@@ -6,11 +6,11 @@ description = "Left recursive PEG parser generator"
 repository = "https://github.com/seanyoung/lrpeg"
 keywords = [ "parser", "generator", "peg", "left-recursive" ]
 categories = ["parsing"]
-edition = "2018"
+edition = "2021"
 readme = "../README.md"
 license = "MIT"
 workspace = ".."
 
 [dependencies]
-unicode-xid = "0.2"
-regex = "1"
+unicode-xid = "0.2.2"
+regex = "1.5.4"

@@ -35,4 +35,4 @@ regex <- re#re\#([^\#\\]|\\.)*\##;
 
 ws <- (COMMENT / WHITESPACE)*;
 
-COMMENT <- re#//[^\r\n]*# .
+COMMENT <- re#//[^\r\n]*#

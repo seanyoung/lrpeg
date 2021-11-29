@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet};
 use std::ffi::OsStr;
 use std::fs;
 use std::path::Path;
@@ -23,7 +23,7 @@ pub fn build_parser(source: &str, mod_name: &str) -> String {
 
 #[derive(Debug)]
 pub struct Generator {
-    symbols: HashSet<String>,
+    symbols: BTreeSet<String>,
     builtins: BTreeMap<ast::Expression, String>,
     terminals: BTreeMap<ast::Expression, String>,
 }
@@ -37,7 +37,7 @@ impl Default for Generator {
 impl Generator {
     pub fn new() -> Self {
         Generator {
-            symbols: HashSet::new(),
+            symbols: BTreeSet::new(),
             builtins: BTreeMap::new(),
             terminals: BTreeMap::new(),
         }
