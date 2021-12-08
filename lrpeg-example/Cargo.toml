@@ -8,5 +8,5 @@ edition = "2021"
 path = "../lrpeg"
 
 [dependencies]
-regex = "1.5.4"
-unicode-xid = "0.2.2"
+regex = "1"
+unicode-xid = "0.2"
