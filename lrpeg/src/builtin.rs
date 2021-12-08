@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 
 pub(crate) fn push_builtins(used: &BTreeMap<Expression, String>, res: &mut String) {
     let builtins = Builtins::init();
-    for (rule, _) in used {
+    for rule in used.keys() {
         if let Some(s) = builtins.rules.get(&rule.expr) {
             res.push_str(s)
         }
@@ -25,7 +25,7 @@ impl Builtins {
     }
 }
 
-const BUILTIN_WHITESPACE: &'static str = r#"
+const BUILTIN_WHITESPACE: &str = r#"
 
     fn builtin_whitespace(&self, pos: usize, input: &str, label: Option<&'static str>, alternative: Option<&'static str>) -> Result<Node, usize> {
         // TODO: is this worth caching?
@@ -47,7 +47,7 @@ const BUILTIN_WHITESPACE: &'static str = r#"
 
         Ok(Node::new(Rule::WHITESPACE, pos, next_pos, label, alternative))
     }"#;
-const BUILTIN_EOI: &'static str = r#"
+const BUILTIN_EOI: &str = r#"
 
     fn builtin_eoi(&self, pos: usize, input: &str, label: Option<&'static str>, alternative: Option<&'static str>) -> Result<Node, usize> {
         // not worth caching
@@ -57,7 +57,7 @@ const BUILTIN_EOI: &'static str = r#"
             Err(pos)
         }
     }"#;
-const BUILTIN_DOT: &'static str = r#"
+const BUILTIN_DOT: &str = r#"
 
     fn builtin_dot(&self, pos: usize, input: &str, label: Option<&'static str>, alternative: Option<&'static str>) -> Result<Node, usize> {
         // not worth caching
@@ -73,7 +73,7 @@ const BUILTIN_DOT: &'static str = r#"
         }
     }"#;
 
-const BUILTIN_XID_IDENTIFIER: &'static str = r#"
+const BUILTIN_XID_IDENTIFIER: &str = r#"
 
     fn builtin_xid_identifier(&mut self, pos: usize, input: &str, label: Option<&'static str>, alternative: Option<&'static str>) -> Result<Node, usize> {
         let key = (pos, Rule::XID_IDENTIFIER);

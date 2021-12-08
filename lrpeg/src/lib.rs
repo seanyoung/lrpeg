@@ -72,7 +72,7 @@ impl Generator {
         res.push_str(" {");
         self.emit(&grammar, &mut res);
         res.push_str("\n}");
-        return res;
+        res
     }
 }
 
