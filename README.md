@@ -3,6 +3,13 @@
 [![CI](https://github.com/seanyoung/lrpeg/workflows/test/badge.svg)](https://github.com/seanyoung/lrpeg/actions)
 [![license](https://img.shields.io/github/license/seanyoung/lrpeg.svg)](LICENSE)
 
+# DEPRECATED
+
+The [peg crate](https://crates.io/crates/peg) now supports left recursion
+using the `#[cache_left_rec]` attribute. This crate is much faster, has
+more features and is just more polished than this crate. So I recommend
+using that crate instead.
+
 # Left Recursive Parsing Expression Grammar (PEG)
 
 lrpeg allows left recursive rules, and uses ratpack parsing for speed. I wrote a
